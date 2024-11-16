@@ -8,12 +8,12 @@ import java.util.Random;
 
 public class Map {
 
+    public final int [][] grille;
+    public final int width;
+    public final int height;
 
-    private final int [][] grille;
-    private final int width;
-    private final int height;
-
-    private List<Intersection> intersections = new ArrayList<>();
+    public List<Intersection> intersections = new ArrayList<>();
+    public List<Point> roads_at_edge = new ArrayList<>();
 
 
     public Map(int x, int y) {
@@ -74,8 +74,8 @@ public class Map {
         for (int i = 0; i < n; i++) {
             //adds a new intersection in random positon buffers from edges by 1 with a random type
             Random random = new Random();
-            int x = random.nextInt(this.height - 4) + 2;
-            int y = random.nextInt(this.width - 4) + 2;
+            int x = random.nextInt(this.height - 3) + 1;
+            int y = random.nextInt(this.width - 3) + 1;
 
             if (intersectionExists(x, y)) {
                 i--;
@@ -87,9 +87,21 @@ public class Map {
             Point p = new Point(x, y);
 
             IntersectionType type = IntersectionType.values()[(random.nextInt(3))];
+            type = IntersectionType.FOUR_WAY;
             Add_Intersection(new Intersection(p.x,p.y,type));
 
             set_valide(intersections.getLast());
+        }
+
+        //check the edges for roads if there is a road add it to the list
+        for (int i = 0; i < this.width; i++) {
+            if (this.grille[0][i] == 1) this.roads_at_edge.add(new Point(0, i)); // Top edge
+            if (this.grille[this.height - 1][i] == 1) this.roads_at_edge.add(new Point(this.height - 1, i)); // Bottom edge
+        }
+
+        for (int i = 0; i < this.height; i++) {
+            if (this.grille[i][0] == 1) this.roads_at_edge.add(new Point(i, 0)); // Left edge
+            if (this.grille[i][this.width - 1] == 1) this.roads_at_edge.add(new Point(i, this.width - 1)); // Right edge
         }
     }
 
