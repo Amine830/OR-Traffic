@@ -21,10 +21,10 @@ public class Main  {
         generateNVehicles(1, map);
 
         for (Vehicle vehicle : vehicles){
-            while(!vehicle.Calculated){
-                vehicle.Calulate_Next_point(map);
+            while(!vehicle.isCalculated()){
+                vehicle.calculateNextPoint(map);
             }
-            System.out.println(vehicle.path);
+            System.out.println(vehicle.getPath());
         }
 
     }

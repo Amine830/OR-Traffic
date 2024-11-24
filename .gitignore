@@ -1,38 +1,17 @@
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
-*.iml
-*.ipr
-
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+# Ignore les fichiers de configurations de VS code
 .vscode/
 
-### Mac OS ###
-.DS_Store
+# Ignore les fichiers de configuration d'Eclipse
+.classpath
+.project
+.settings/
+
+# Ignore les fichiers de configuration d'Intellij
+.idea/
+*.iml
+*.iws
+
+# Ignore les fichiers produits par Maven pour ne versionner que le code,
+# pas les executables ou les logs.
+log/
+target/
