@@ -25,13 +25,14 @@ public class Javafx extends Application {
     public void start(Stage primaryStage) throws Exception {
         map = new Map(20, 20);
         map.setIntersections(3);
-        Main.generateNVehicles(5, map);
+        Main.generateNVehicles(1, map);
         //Main.generateVehicle(map, new Point(0, 2), new Point(18, 18), "car");
 
         vehicles = Main.vehicles;
 
         gridPane = new GridPane();
         drawMap();
+        map.setLanesDirection();
         map.Print_Map();
         map.Print_Lane_Directions();
 

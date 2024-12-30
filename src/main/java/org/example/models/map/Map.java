@@ -39,6 +39,39 @@ public class Map {
         this.laneDirections[p.x][p.y] = direction;
     }
 
+    public void setLanesDirection() {
+       for (int i = 0; i < this.width; i++ ){
+           if(this.grille[0][i] == 1){
+               for (int j = 0; j < this.height; j++){
+                   if(this.grille[j][i] == 1){
+                       this.setLaneDirection(new Point(j,i), LaneDirection.SOUTH);
+                       this.setLaneDirection(new Point(j,i+1), LaneDirection.NORTH);
+                   }
+               }
+               i++;
+           }
+       }
+       for (int i = 0; i < this.height; i++ ){
+           if(this.grille[i][0] == 1){
+               for (int j = 0; j < this.width; j++){
+                   if(this.grille[i][j] == 1){
+                       this.setLaneDirection(new Point(i,j), LaneDirection.WEST);
+                       this.setLaneDirection(new Point(i+1,j), LaneDirection.EAST);
+                   }
+               }
+               i++;
+           }
+       }
+
+       for(Intersection i : intersections){
+              Point p = i.getPos();
+              this.setLaneDirection(new Point(p.x, p.y), LaneDirection.INTERSECTION);
+                this.setLaneDirection(new Point(p.x + 1, p.y), LaneDirection.INTERSECTION);
+                this.setLaneDirection(new Point(p.x, p.y + 1), LaneDirection.INTERSECTION);
+                this.setLaneDirection(new Point(p.x + 1, p.y + 1), LaneDirection.INTERSECTION);
+       }
+    }
+
     /**
      * Print the map for visualization
      */
@@ -82,6 +115,9 @@ public class Map {
                             break;
                         case SOUTH_WEST:
                             System.out.print("SW ");
+                            break;
+                        case INTERSECTION:
+                            System.out.print("I  ");
                             break;
                         default:
                             System.out.print("?  ");
@@ -198,16 +234,16 @@ public class Map {
             this.grille[i][p.y] = 1;
             this.grille[i][p.y + 1] = 1;
 
-            // si la route est au nord
-            if (i < p.x) {
-                setLaneDirection(new Point(i, p.y), LaneDirection.NORTH);
-                setLaneDirection(new Point(i, p.y + 1), LaneDirection.SOUTH);
-            }
-            // si la route est au sud
-            else {
-                setLaneDirection(new Point(i, p.y), LaneDirection.SOUTH);
-                setLaneDirection(new Point(i, p.y + 1), LaneDirection.NORTH);
-            }
+//            // si la route est au nord
+//            if (i < p.x) {
+//                setLaneDirection(new Point(i, p.y), LaneDirection.NORTH);
+//                setLaneDirection(new Point(i, p.y + 1), LaneDirection.SOUTH);
+//            }
+//            // si la route est au sud
+//            else {
+//                setLaneDirection(new Point(i, p.y), LaneDirection.SOUTH);
+//                setLaneDirection(new Point(i, p.y + 1), LaneDirection.NORTH);
+//            }
         } else if (this.grille[i][p.y] == 1) {
             Add_Intersection(new Intersection(i, p.y, IntersectionType.FOUR_WAY));
         }
@@ -220,13 +256,13 @@ public class Map {
         if (this.grille[p.x][j] == 0) {
             this.grille[p.x][j] = 1;
             this.grille[p.x + 1][j] = 1;
-            if (j < p.y) {
-                setLaneDirection(new Point(p.x, j), LaneDirection.WEST);
-                setLaneDirection(new Point(p.x + 1, j), LaneDirection.EAST);
-            } else {
-                setLaneDirection(new Point(p.x, j), LaneDirection.EAST);
-                setLaneDirection(new Point(p.x + 1, j), LaneDirection.WEST);
-            }
+//            if (j < p.y) {
+//                setLaneDirection(new Point(p.x, j), LaneDirection.WEST);
+//                setLaneDirection(new Point(p.x + 1, j), LaneDirection.EAST);
+//            } else {
+//                setLaneDirection(new Point(p.x, j), LaneDirection.EAST);
+//                setLaneDirection(new Point(p.x + 1, j), LaneDirection.WEST);
+//            }
         } else if (this.grille[p.x][j] == 1) {
             Add_Intersection(new Intersection(p.x, j, IntersectionType.FOUR_WAY));
         }
@@ -287,11 +323,11 @@ public class Map {
         this.grille[i.getPos().x + 1][i.getPos().y + 1] = 2;
 
 
-        // Set lane directions for the intersection
-        setLaneDirection(new Point(i.getPos().x, i.getPos().y), LaneDirection.NORTH_EAST);
-        setLaneDirection(new Point(i.getPos().x + 1, i.getPos().y), LaneDirection.SOUTH_EAST);
-        setLaneDirection(new Point(i.getPos().x, i.getPos().y + 1), LaneDirection.NORTH_WEST);
-        setLaneDirection(new Point(i.getPos().x + 1, i.getPos().y + 1), LaneDirection.SOUTH_WEST);
+//        // Set lane directions for the intersection
+//        setLaneDirection(new Point(i.getPos().x, i.getPos().y), LaneDirection.NORTH_EAST);
+//        setLaneDirection(new Point(i.getPos().x + 1, i.getPos().y), LaneDirection.SOUTH_EAST);
+//        setLaneDirection(new Point(i.getPos().x, i.getPos().y + 1), LaneDirection.NORTH_WEST);
+//        setLaneDirection(new Point(i.getPos().x + 1, i.getPos().y + 1), LaneDirection.SOUTH_WEST);
 
         Exception e = new Exception("Invalid Map Intersection at " + intersections.get(intersections.size() - 1).getPos());
         for (int j = 0; j < this.width; j++) {

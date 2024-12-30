@@ -18,5 +18,6 @@ public enum LaneDirection {
     NORTH_SOUTH_WEST,
     EAST_WEST_NORTH,
     EAST_WEST_SOUTH,
-    ALL_DIRECTIONS
+    ALL_DIRECTIONS,
+    INTERSECTION
 }
