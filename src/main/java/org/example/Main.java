@@ -2,16 +2,20 @@ package org.example;
 
 
 import org.example.models.map.Map;
+import org.example.models.vehicles.Bus;
+import org.example.models.vehicles.Car;
+import org.example.models.vehicles.Truck;
 import org.example.models.vehicles.Vehicle;
+import org.example.models.central.TrafficControlCenter;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 
 public class Main  {
-    static List<Vehicle> vehicles = new ArrayList<>();
+    public static List<Vehicle> vehicles = new ArrayList<>();
     public static void main(String[] args) throws Exception {
 
         Map map = new Map(20,20);
@@ -27,16 +31,54 @@ public class Main  {
             System.out.println(vehicle.getPath());
         }
 
+//        TrafficControlCenter controlCenter = new TrafficControlCenter(vehicles, map.getIntersections());
+//        controlCenter.manageTraffic();
+
     }
 
 
-    public static void generateNVehicles(int n, Map map){
-        //for now we will generate 1 vehicle
+    /**
+     * Generer n vehicules
+     * @param n
+     * @param map
+     */
+    public static void generateNVehicles(int n, Map map) {
         Random rand = new Random();
-        Point starting = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
-        Point destination = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
-        Vehicle vehicle = new Vehicle(destination, starting, 1);
-        vehicles.add(vehicle);
+        for (int i = 0; i < n; i++) {
+            Point starting = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
+            Point destination = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
+            Vehicle vehicle;
+            switch (rand.nextInt(3)) {
+                case 0:
+                    vehicle = new Car(destination, starting, 1);
+                    break;
+                case 1:
+                    vehicle = new Truck(destination, starting, 1);
+                    break;
+                case 2:
+                default:
+                    vehicle = new Bus(destination, starting, 1);
+                    break;
+            }
+            vehicles.add(vehicle);
+        }
+    }
 
+    public static void generateVehicle(Map map, Point starting, Point destination, String vehicleType) {
+        Vehicle vehicle;
+        switch (vehicleType.toLowerCase()) {
+            case "car":
+                vehicle = new Car(destination, starting, 1);
+                break;
+            case "truck":
+                vehicle = new Truck(destination, starting, 1);
+                break;
+            case "bus":
+                vehicle = new Bus(destination, starting, 1);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid vehicle type: " + vehicleType);
+        }
+        vehicles.add(vehicle);
     }
 }

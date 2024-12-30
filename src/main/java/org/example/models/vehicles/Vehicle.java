@@ -6,6 +6,9 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Class representing a vehicle.
+ */
 public class Vehicle {
     private static int id = 0;
     private final int vehicleId;
@@ -19,7 +22,7 @@ public class Vehicle {
         this.destination = destination;
         this.position = position;
         this.speed = speed;
-        vehicleId = ++id;
+        this.vehicleId = ++id;
         this.path.add(position);
     }
 
@@ -47,60 +50,53 @@ public class Vehicle {
         this.position = position;
     }
 
-    public void addPointToPath(Point p) {
-        this.path.add(p);
-    }
-
-    public void removePointFromPath(Point p) {
-        this.path.remove(p);
-    }
-
-    public void calculateNextPoint(Map map) {
-        Point current = path.get(path.size() - 1);
-        System.out.println(path.size());
-        Point destination = this.getDestination();
-        List<Point> neighbors = new ArrayList<>();
-        neighbors.add(new Point(current.x + 1, current.y));
-        neighbors.add(new Point(current.x - 1, current.y));
-        neighbors.add(new Point(current.x, current.y + 1));
-        neighbors.add(new Point(current.x, current.y - 1));
-
-        Point closest = null;
-        double minDistance = Integer.MAX_VALUE;
-        for (Point neighbor : neighbors) {
-            if (neighbor.x == destination.x && neighbor.y == destination.y) {
-                addPointToPath(neighbor);
-                System.out.println("Calculated Path");
-                calculated = true;
-                return;
-            }
-
-            if (neighbor.x < 0 || neighbor.y < 0 || neighbor.x >= map.height || neighbor.y >= map.width) {
-                continue;
-            }
-            if (map.grille[neighbor.x][neighbor.y] == 0) {
-                continue;
-            }
-
-            double distance = getDistance(neighbor, destination);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closest = neighbor;
-            }
-        }
-        assert closest != null;
-        addPointToPath(closest);
-    }
-
-    private double getDistance(Point a, Point b) {
-        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-    }
-
     public List<Point> getPath() {
         return path;
     }
 
     public boolean isCalculated() {
         return calculated;
+    }
+
+    /**
+         * Calculer le prochain point.
+     *
+     * @param map la carte sur laquelle le véhicule se déplace.
+     * @return le prochain point.
+     */
+    public Point calculateNextPoint(Map map) {
+        Point current = position;
+        List<Point> neighbors = map.getNeighbors(current);
+
+        Point closest = null;
+        double minDistance = Double.MAX_VALUE;
+        for (Point neighbor : neighbors) {
+            double distance = getDistance(neighbor, destination);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closest = neighbor;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Se déplacer vers la destination.
+     *
+     * @param map la carte sur laquelle le véhicule se déplace.
+     */
+    public void moveTowardsDestination(Map map) {
+        if (position.equals(destination)) {
+            return;
+        }
+        Point nextPoint = calculateNextPoint(map);
+        if (nextPoint != null) {
+            position = nextPoint;
+            path.add(nextPoint);
+        }
+    }
+
+    private double getDistance(Point a, Point b) {
+        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
     }
 }
