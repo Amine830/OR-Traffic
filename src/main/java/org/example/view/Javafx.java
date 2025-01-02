@@ -1,3 +1,4 @@
+// src/main/java/org/example/view/Javafx.java
 package org.example.view;
 
 import javafx.animation.KeyFrame;
@@ -9,30 +10,37 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.example.Main;
+import org.example.controllers.SimulationController;
 import org.example.models.map.Map;
 import org.example.models.vehicles.Vehicle;
 
-import java.awt.*;
 import java.util.List;
 
+/**
+ * Classe Javafx
+ * pour gérer l'interface graphique de la simulation
+ */
 public class Javafx extends Application {
-    private static Map map;
-    private static List<Vehicle> vehicles;
+    private SimulationController simulationController;
+    private Map map;
+    private List<Vehicle> vehicles;
     private GridPane gridPane;
 
+    /**
+     * Méthode start
+     * pour démarrer l'interface graphique
+     * @param primaryStage
+     * @throws Exception
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        map = new Map(20, 20);
-        map.setIntersections(3);
-        Main.generateNVehicles(1, map);
-        //Main.generateVehicle(map, new Point(0, 2), new Point(18, 18), "car");
-
-        vehicles = Main.vehicles;
+        simulationController = new SimulationController();
+        simulationController.initializeSimulation(40, 30, 4, 16);
+        map = simulationController.getMap();
+        vehicles = simulationController.getVehicles();
 
         gridPane = new GridPane();
         drawMap();
-        map.setLanesDirection();
         map.Print_Map();
         map.Print_Lane_Directions();
 
@@ -41,11 +49,15 @@ public class Javafx extends Application {
         primaryStage.setTitle("Traffic Simulation");
         primaryStage.show();
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(500), e -> updateVehicles()));
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(250), e -> updateVehicles()));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
 
+    /**
+     * Méthode drawMap
+     * pour dessiner la map
+     */
     private void drawMap() {
         for (int i = 0; i < map.height; i++) {
             for (int j = 0; j < map.width; j++) {
@@ -66,6 +78,10 @@ public class Javafx extends Application {
         }
     }
 
+    /**
+     * Méthode updateVehicles
+     * pour mettre à jour les véhicules
+     */
     private void updateVehicles() {
         gridPane.getChildren().clear();
         drawMap();
@@ -76,6 +92,11 @@ public class Javafx extends Application {
         }
     }
 
+    /**
+     * Méthode main
+     * pour lancer l'application
+     * @param args
+     */
     public static void main(String[] args) {
         launch(args);
     }

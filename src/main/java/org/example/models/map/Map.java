@@ -1,5 +1,7 @@
 package org.example.models.map;
 
+import org.example.models.vehicles.Vehicle;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,7 @@ public class Map {
 
     public List<Intersection> intersections = new ArrayList<>();
     public List<Point> roads_at_edge = new ArrayList<>();
+    private List<Vehicle> vehicles;
 
     public Map(int x, int y) {
         this.width = y;
@@ -37,6 +40,10 @@ public class Map {
      */
     private void setLaneDirection(Point p, LaneDirection direction) {
         this.laneDirections[p.x][p.y] = direction;
+    }
+    
+    public LaneDirection[][] getlinedirection(){
+        return this.laneDirections;
     }
 
     public void setLanesDirection() {
@@ -65,10 +72,10 @@ public class Map {
 
        for(Intersection i : intersections){
               Point p = i.getPos();
-              this.setLaneDirection(new Point(p.x, p.y), LaneDirection.INTERSECTION);
-                this.setLaneDirection(new Point(p.x + 1, p.y), LaneDirection.INTERSECTION);
-                this.setLaneDirection(new Point(p.x, p.y + 1), LaneDirection.INTERSECTION);
-                this.setLaneDirection(new Point(p.x + 1, p.y + 1), LaneDirection.INTERSECTION);
+              this.setLaneDirection(new Point(p.x, p.y), LaneDirection.SOUTH_WEST);
+              this.setLaneDirection(new Point(p.x + 1, p.y), LaneDirection.SOUTH_EAST);
+              this.setLaneDirection(new Point(p.x, p.y + 1), LaneDirection.NORTH_WEST);
+              this.setLaneDirection(new Point(p.x + 1, p.y + 1), LaneDirection.NORTH_EAST);
        }
     }
 
@@ -76,8 +83,8 @@ public class Map {
      * Print the map for visualization
      */
     public void Print_Map() {
-        for (int i = 0; i < this.width; i++) {
-            for (int j = 0; j < this.height; j++) {
+        for (int i = 0; i < this.height; i++) {
+            for (int j = 0; j < this.width; j++) {
                 System.out.print(this.grille[i][j] + " ");
             }
             System.out.println();
@@ -129,6 +136,22 @@ public class Map {
             }
             System.out.println();
         }
+    }
+
+    /**
+     * Réccupérer les véhicules de la carte
+     * @return Liste de véhicules
+     */
+    public List<Vehicle> getVehicles() {
+        return vehicles;
+    }
+
+    /**
+     * Mettre les véhicules dans la carte
+     * @param vehicles Liste de véhicules
+     */
+    public void setVehicles(List<Vehicle> vehicles) {
+        this.vehicles = vehicles;
     }
 
     /**
@@ -362,12 +385,15 @@ public class Map {
 
         List<Point> validNeighbors = new ArrayList<>();
         for (Point neighbor : neighbors) {
+            // si le voisin est en dehors de la grille
             if (neighbor.x < 0 || neighbor.y < 0 || neighbor.x >= height || neighbor.y >= width) {
                 continue;
             }
+            // si le voisin n'est pas une route
             if (grille[neighbor.x][neighbor.y] == 0) {
                 continue;
             }
+            // si le voisin est une intersection
             LaneDirection direction = laneDirections[neighbor.x][neighbor.y];
             if (direction != null && isValidDirection(direction, current, neighbor)) {
                 validNeighbors.add(neighbor);
@@ -378,13 +404,13 @@ public class Map {
 
     /**
      * Check On vérifie si la direction est valide
-     * @param laneDirection Lane direction
+     * @param neighborDirection Lane direction
      * @param current Current point
      * @param neighbor Neighbor point
      * @return vrai si la direction est valide
      */
-    public boolean isValidDirection(LaneDirection laneDirection, Point current, Point neighbor) {
-        switch (laneDirection) {
+    public boolean isValidDirection(LaneDirection neighborDirection, Point current, Point neighbor) {
+        switch (neighborDirection) {
             case NORTH:
                 return neighbor.x < current.x;
             case SOUTH:
@@ -393,29 +419,16 @@ public class Map {
                 return neighbor.y > current.y;
             case WEST:
                 return neighbor.y < current.y;
-            case NORTH_SOUTH:
-                return neighbor.x != current.x;
-            case EAST_WEST:
-                return neighbor.y != current.y;
             case NORTH_EAST:
-                return (neighbor.x < current.x && neighbor.y > current.y);
+                return (neighbor.x < current.x || neighbor.y > current.y);
             case NORTH_WEST:
-                return (neighbor.x < current.x && neighbor.y < current.y);
+                return (neighbor.x < current.x || neighbor.y < current.y);
             case SOUTH_EAST:
-                return (neighbor.x > current.x && neighbor.y > current.y);
+                return (neighbor.x > current.x || neighbor.y > current.y);
             case SOUTH_WEST:
-                return (neighbor.x > current.x && neighbor.y < current.y);
-            case NORTH_SOUTH_EAST:
-                return (neighbor.x != current.x || neighbor.y > current.y);
-            case NORTH_SOUTH_WEST:
-                return (neighbor.x != current.x || neighbor.y < current.y);
-            case EAST_WEST_NORTH:
-                return (neighbor.y != current.y || neighbor.x < current.x);
-            case EAST_WEST_SOUTH:
-                return (neighbor.y != current.y || neighbor.x > current.x);
-            case ALL_DIRECTIONS:
-                return true;
+                return (neighbor.x > current.x || neighbor.y < current.y);
             default:
+                System.out.println("Invalid direction dans isValidDirection");
                 return false;
         }
     }
