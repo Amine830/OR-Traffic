@@ -1,10 +1,10 @@
 package org.example.models.vehicles;
 
+import org.example.controllers.SimulationController;
 import org.example.models.map.Map;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Class representing a vehicle.
@@ -17,6 +17,9 @@ public class Vehicle {
     private int speed;
     private List<Point> path = new ArrayList<>();
     private boolean calculated = false;
+    private boolean arrived = false;
+
+    private SimulationController simulationController;
 
     public Vehicle(Point destination, Point position, int speed) {
         this.destination = destination;
@@ -30,9 +33,15 @@ public class Vehicle {
         return destination;
     }
 
+    public void setSimulationController(SimulationController simulationController) {
+        this.simulationController = simulationController;
+    }
+
     public Point getPosition() {
         return position;
     }
+
+    public boolean isArrived() {return arrived;}
 
     public int getSpeed() {
         return speed;
@@ -58,42 +67,129 @@ public class Vehicle {
         return calculated;
     }
 
-    /**
-         * Calculer le prochain point.
-     *
-     * @param map la carte sur laquelle le véhicule se déplace.
-     * @return le prochain point.
-     */
-    public Point calculateNextPoint(Map map) {
-        Point current = position;
-        List<Point> neighbors = map.getNeighbors(current);
 
-        Point closest = null;
-        double minDistance = Double.MAX_VALUE;
-        for (Point neighbor : neighbors) {
-            double distance = getDistance(neighbor, destination);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closest = neighbor;
-            }
-        }
-        return closest;
-    }
 
     /**
      * Se déplacer vers la destination.
      *
-     * @param map la carte sur laquelle le véhicule se déplace.
+     *
      */
-    public void moveTowardsDestination(Map map) {
+    public void moveToNextPoint() {
+
         if (position.equals(destination)) {
+            arrived = true;
             return;
         }
-        Point nextPoint = calculateNextPoint(map);
-        if (nextPoint != null) {
-            position = nextPoint;
-            path.add(nextPoint);
+
+        if (path.isEmpty() || path.getFirst() == null) {
+            return;
         }
+        Point nextPoint = path.getFirst();
+
+        //here put the priority logic for the intersection
+
+
+
+
+        if (!is_next_move_colision(nextPoint)) {
+            this.position = nextPoint;
+            this.path.removeFirst();
+        }
+
+    }
+
+    /**
+     * calculates the path
+     *
+     * @return
+     */
+
+    public void calculatePath(Map map) {
+        List<List<Point>> paths = new ArrayList<>();
+
+        checkAllPaths(map, paths);
+        System.out.println("Paths for vehicle " + vehicleId + " : " + paths.size());
+        if(paths.isEmpty()) {
+            System.out.println("No path found for vehicle " + vehicleId);
+            return;
+        }
+        path = paths.get(0);
+
+        path.removeFirst();
+
+        calculated = true;
+
+    }
+
+
+    /**
+     * Calculer le prochain point.
+     *
+     * @param map la carte sur laquelle le véhicule se déplace.
+     * @return le prochain point.
+     */
+    public void checkAllPaths(Map map, List<List<Point>> paths) {
+        Queue<List<Point>> queue = new LinkedList<>();
+        Set<Point> visited = new HashSet<>();
+
+        // Initialize the BFS with the starting position
+        List<Point> initialPath = new ArrayList<>();
+        initialPath.add(position);
+        queue.add(initialPath);
+        visited.add(position);
+
+        while (!queue.isEmpty()) {
+            List<Point> currentPath = queue.poll();
+            Point currentPoint = currentPath.get(currentPath.size() - 1);
+
+            // If the current point is a destination, store the path
+            if (currentPoint.equals(destination)) {
+                paths.add(new ArrayList<>(currentPath));
+                continue; // Continue to explore other paths
+            }
+
+            // Check if the current point is a road
+            if (map.isRoad(currentPoint)) {
+                List<Point> neighbors = map.ContinueInDirection(currentPoint);
+
+                for (Point neighbor : neighbors) {
+                    if (!visited.contains(neighbor)) {
+                        visited.add(neighbor);
+                        List<Point> newPath = new ArrayList<>(currentPath);
+                        newPath.add(neighbor);
+                        queue.add(newPath);
+                    }
+                }
+            }
+
+            // Check if the current point is an intersection
+            if (map.isIntersection(currentPoint)) {
+                List<Point> neighbors = map.ContinueInDirection(currentPoint);
+
+                for (Point neighbor : neighbors) {
+                    if (!visited.contains(neighbor)) {
+                        visited.add(neighbor);
+                        List<Point> newPath = new ArrayList<>(currentPath);
+                        newPath.add(neighbor);
+                        queue.add(newPath);
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    public boolean is_next_move_colision(Point next_move){
+        List<Point> vehicles_positions = simulationController.getVehiclesPositions();
+        for (Point vehicle_position : vehicles_positions){
+
+            if (vehicle_position.equals(next_move)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private double getDistance(Point a, Point b) {

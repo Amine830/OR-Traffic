@@ -182,6 +182,40 @@ public class Map {
     }
 
     /**
+     * is the point an intersection
+     */
+    public boolean isIntersection(Point p) {
+        return grille[p.x][p.y] == 2;
+    }
+
+    /**
+     * is the point a road
+     */
+    public boolean isRoad(Point p) {
+        return grille[p.x][p.y] == 1;
+    }
+
+    /**get the intersection at the point
+     * @param p
+     * @return
+     */
+    public Intersection getIntersection(Point p) {
+        for (Intersection i : intersections) {
+
+            Point left = new Point(i.getPos().x + 1, i.getPos().y);
+            Point right = new Point(i.getPos().x, i.getPos().y + 1);
+            Point bottom = new Point(i.getPos().x + 1, i.getPos().y + 1);
+            if (i.getPos().equals(p)
+                    || left.equals(p)
+                    || right.equals(p)
+                    || bottom.equals(p)) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Set the intersections in the grid
      * @param n Number of intersections to set
      * @throws Exception
@@ -198,7 +232,14 @@ public class Map {
             }
 
             Point p = new Point(x, y);
-            IntersectionType type = IntersectionType.FOUR_WAY;
+            Random rand = new Random();
+            ArrayList<IntersectionType> types = new ArrayList<>();
+            types.add(IntersectionType.FOUR_WAY);
+            types.add(IntersectionType.THREE_WAY_N);
+            types.add(IntersectionType.THREE_WAY_S);
+            types.add(IntersectionType.THREE_WAY_E);
+
+            IntersectionType type = types.get(rand.nextInt(types.size()));
             Add_Intersection(new Intersection(p.x, p.y, type));
 
             set_valide(intersections.get(intersections.size() - 1));
@@ -338,7 +379,7 @@ public class Map {
      * @param i Intersection to add
      */
     private void Add_Intersection(Intersection i) throws Exception {
-        System.out.println(" x: " + i.getPos().x + ", y: " + i.getPos().y + ", type: " + i.getType());
+
         this.intersections.add(i);
         this.grille[i.getPos().x][i.getPos().y] = 2;
         this.grille[i.getPos().x + 1][i.getPos().y] = 2;
@@ -376,7 +417,7 @@ public class Map {
      * @param current Current point
      * @return List of neighbors
      */
-    public List<Point> getNeighbors(Point current) {
+    public List<Point> ContinueInDirection(Point current) {
         List<Point> neighbors = new ArrayList<>();
         neighbors.add(new Point(current.x + 1, current.y));
         neighbors.add(new Point(current.x - 1, current.y));

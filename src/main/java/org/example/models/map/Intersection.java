@@ -3,17 +3,26 @@ package org.example.models.map;
 import org.example.models.vehicles.Vehicle;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 public class Intersection {
     private final Point position;
     private IntersectionType type;
-    private List<Vehicle> vehicles;
+    private List<Vehicle> vehicles ;
+
+
+
 
     public Intersection(int x, int y, IntersectionType type) {
         this.position = new Point(x, y);
-        this.type = type;
+        this.type = type;;
+
     }
+
+
+
 
     public Point getPos() {
         return position;

@@ -14,6 +14,7 @@ import org.example.controllers.SimulationController;
 import org.example.models.map.Map;
 import org.example.models.vehicles.Vehicle;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -35,13 +36,15 @@ public class Javafx extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(40, 30, 4, 16);
+        simulationController.initializeSimulation(20, 20,3 , 200);
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
-
+        for (Vehicle vehicle : vehicles) {
+            vehicle.setSimulationController(simulationController);
+        }
         gridPane = new GridPane();
         drawMap();
-        map.Print_Map();
+        //map.Print_Map();
         map.Print_Lane_Directions();
 
         Scene scene = new Scene(gridPane, map.width * 20, map.height * 20);
@@ -86,9 +89,23 @@ public class Javafx extends Application {
         gridPane.getChildren().clear();
         drawMap();
         for (Vehicle vehicle : vehicles) {
-            vehicle.moveTowardsDestination(map);
-            Rectangle rect = new Rectangle(20, 20, Color.BLUE);
+
+            vehicle.moveToNextPoint();
+            Rectangle rect = new Rectangle(19, 19, Color.BLUE);
             gridPane.add(rect, vehicle.getPosition().y, vehicle.getPosition().x);
+            //removes the vehicle from the list if it has arrived
+            if(vehicle.isArrived()) {
+
+                vehicle.setPosition(new Point(0, 0));
+                rect.setFill(Color.GREEN);
+                //for some reason removes another vehicle from the list
+//                for(int i = 0; i < vehicle.getPath().size(); i++) {
+//                    if( vehicles.get(i).equals(vehicle)) {
+//                        vehicles.remove(i);
+//                        break;
+//                    }
+//                }
+            }
         }
     }
 

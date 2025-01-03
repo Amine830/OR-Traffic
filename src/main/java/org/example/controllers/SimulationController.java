@@ -92,8 +92,21 @@ public class SimulationController {
                     vehicle = new Bus(destination, starting, 1);
                     break;
             }
+            vehicle.calculatePath(map);
             vehicles.add(vehicle);
         }
+    }
+
+    /**
+     * retourner une list des position de tous les vehicules
+     */
+
+    public List <Point> getVehiclesPositions(){
+        List <Point> positions = new ArrayList<>();
+        for (Vehicle vehicle : vehicles){
+            positions.add(vehicle.getPosition());
+        }
+        return positions;
     }
 
     /**
