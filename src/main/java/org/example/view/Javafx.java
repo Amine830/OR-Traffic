@@ -36,7 +36,7 @@ public class Javafx extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(20, 20,3 , 200);
+        simulationController.initializeSimulation(50, 35,5 ,100 );
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
         for (Vehicle vehicle : vehicles) {
@@ -52,7 +52,7 @@ public class Javafx extends Application {
         primaryStage.setTitle("Traffic Simulation");
         primaryStage.show();
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(250), e -> updateVehicles()));
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(750), e -> updateVehicles()));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
@@ -90,7 +90,7 @@ public class Javafx extends Application {
         drawMap();
         for (Vehicle vehicle : vehicles) {
 
-            vehicle.moveToNextPoint();
+            vehicle.moveToNextPoint(map);
             Rectangle rect = new Rectangle(19, 19, Color.BLUE);
             gridPane.add(rect, vehicle.getPosition().y, vehicle.getPosition().x);
             //removes the vehicle from the list if it has arrived

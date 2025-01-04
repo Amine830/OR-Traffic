@@ -1,0 +1,16 @@
+package org.example.models.map;
+
+public enum Turns {
+    FROM_NORTH_LEFT,
+    FROM_NORTH_STRAIGHT,
+    FROM_NORTH_RIGHT,
+    FROM_EAST_LEFT,
+    FROM_EAST_STRAIGHT,
+    FROM_EAST_RIGHT,
+    FROM_SOUTH_LEFT,
+    FROM_SOUTH_STRAIGHT,
+    FROM_SOUTH_RIGHT,
+    FROM_WEST_LEFT,
+    FROM_WEST_STRAIGHT,
+    FROM_WEST_RIGHT
+}

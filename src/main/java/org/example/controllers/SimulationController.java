@@ -77,7 +77,7 @@ public class SimulationController {
             // Find a valid destination point
             do {
                 destination = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
-            } while (!isValidDestinationPoint(destination, map) || starting.equals(destination));
+            } while (!isValidDestinationPoint(destination, map) || isStartCloseToDestination(starting, destination));
 
             Vehicle vehicle;
             switch (rand.nextInt(3)) {
@@ -95,6 +95,10 @@ public class SimulationController {
             vehicle.calculatePath(map);
             vehicles.add(vehicle);
         }
+    }
+
+    boolean isStartCloseToDestination(Point start, Point destination){
+        return Math.abs(start.x - destination.x) + Math.abs(start.y - destination.y) < 2;
     }
 
     /**

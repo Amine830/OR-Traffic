@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Map {
+public class Map{
 
     public final int[][] grille;
     public final int width;
@@ -46,27 +46,27 @@ public class Map {
         return this.laneDirections;
     }
 
+    public LaneDirection getlinedirection(Point p){
+        return this.laneDirections[p.x][p.y];
+    }
+
     public void setLanesDirection() {
        for (int i = 0; i < this.width; i++ ){
-           if(this.grille[0][i] == 1){
-               for (int j = 0; j < this.height; j++){
-                   if(this.grille[j][i] == 1){
-                       this.setLaneDirection(new Point(j,i), LaneDirection.SOUTH);
-                       this.setLaneDirection(new Point(j,i+1), LaneDirection.NORTH);
-                   }
+           for (int j = 0; j < this.height; j++){
+               if(this.grille[j][i] == 1){
+                if(this.width-1>=i+1 && this.grille[j][i+1] == 0){
+                    this.setLaneDirection(new Point(j, i), LaneDirection.NORTH);
+                }
+                if(i-1 >= 0 &&this.grille[j][i-1] == 0){
+                    this.setLaneDirection(new Point(j, i), LaneDirection.SOUTH);
+                }
+                if(this.height-1>=j+1 && this.grille[j+1][i] == 0){
+                    this.setLaneDirection(new Point(j, i), LaneDirection.EAST);
+                }
+                if(j-1>= 0 && this.grille[j-1][i] == 0){
+                    this.setLaneDirection(new Point(j, i), LaneDirection.WEST);
+                }
                }
-               i++;
-           }
-       }
-       for (int i = 0; i < this.height; i++ ){
-           if(this.grille[i][0] == 1){
-               for (int j = 0; j < this.width; j++){
-                   if(this.grille[i][j] == 1){
-                       this.setLaneDirection(new Point(i,j), LaneDirection.WEST);
-                       this.setLaneDirection(new Point(i+1,j), LaneDirection.EAST);
-                   }
-               }
-               i++;
            }
        }
 
@@ -240,6 +240,7 @@ public class Map {
             types.add(IntersectionType.THREE_WAY_E);
 
             IntersectionType type = types.get(rand.nextInt(types.size()));
+
             Add_Intersection(new Intersection(p.x, p.y, type));
 
             set_valide(intersections.get(intersections.size() - 1));
