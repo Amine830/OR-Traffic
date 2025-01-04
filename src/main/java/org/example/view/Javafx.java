@@ -15,6 +15,7 @@ import org.example.models.map.Map;
 import org.example.models.vehicles.Vehicle;
 
 import java.awt.*;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,6 +27,11 @@ public class Javafx extends Application {
     private Map map;
     private List<Vehicle> vehicles;
     private GridPane gridPane;
+    public static int TotalWaitingTime = 0;
+    private int TimeUnit = 250;
+    private int peakVehicles ;
+    private boolean addingVehicles = true;
+    private int count = 0;
 
     /**
      * Méthode start
@@ -36,12 +42,11 @@ public class Javafx extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(50, 35,5 ,100 );
+        simulationController.initializeSimulation(50, 35,5 ,20 );
+        peakVehicles = 100;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
-        for (Vehicle vehicle : vehicles) {
-            vehicle.setSimulationController(simulationController);
-        }
+
         gridPane = new GridPane();
         drawMap();
         //map.Print_Map();
@@ -52,9 +57,28 @@ public class Javafx extends Application {
         primaryStage.setTitle("Traffic Simulation");
         primaryStage.show();
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(750), e -> updateVehicles()));
+
+
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TimeUnit), e -> {
+            updateVehicles();
+            manageVehicleCount();
+        }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
+    }
+
+    /**
+     * managing vehicles count
+     */
+    private void manageVehicleCount() {
+        count = (int) (Math.random() * 5) ;
+        if (addingVehicles) {
+            if (vehicles.size() < peakVehicles) {
+                simulationController.addVehicles(1+ count);
+            } else {
+                addingVehicles = false;
+            }
+        }
     }
 
     /**
@@ -88,23 +112,29 @@ public class Javafx extends Application {
     private void updateVehicles() {
         gridPane.getChildren().clear();
         drawMap();
-        for (Vehicle vehicle : vehicles) {
 
+
+        if(vehicles.isEmpty()){
+            System.out.println("Total Waiting Time: " + TotalWaitingTime*TimeUnit/1000 + " seconds");
+            System.exit(0);
+        }
+
+
+        Iterator<Vehicle> iterator = vehicles.iterator();
+        while (iterator.hasNext()) {
+            Vehicle vehicle = iterator.next();
             vehicle.moveToNextPoint(map);
             Rectangle rect = new Rectangle(19, 19, Color.BLUE);
             gridPane.add(rect, vehicle.getPosition().y, vehicle.getPosition().x);
-            //removes the vehicle from the list if it has arrived
-            if(vehicle.isArrived()) {
-
+            // removes the vehicle from the list if it has arrived
+            if (vehicle.isArrived()) {
+                if (!vehicle.getPosition().equals(new Point(0, 0))) {
+                    TotalWaitingTime += vehicle.TimeWating;
+                }
+                iterator.remove();
                 vehicle.setPosition(new Point(0, 0));
                 rect.setFill(Color.GREEN);
-                //for some reason removes another vehicle from the list
-//                for(int i = 0; i < vehicle.getPath().size(); i++) {
-//                    if( vehicles.get(i).equals(vehicle)) {
-//                        vehicles.remove(i);
-//                        break;
-//                    }
-//                }
+
             }
         }
     }
@@ -118,3 +148,5 @@ public class Javafx extends Application {
         launch(args);
     }
 }
+
+

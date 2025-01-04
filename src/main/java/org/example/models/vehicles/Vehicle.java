@@ -22,6 +22,7 @@ public class Vehicle {
     private boolean calculated = false;
     private boolean arrived = false;
     public boolean turning = false;
+    public int TimeWating = 0;
 
     private SimulationController simulationController;
 
@@ -113,7 +114,7 @@ public class Vehicle {
             }
 
                     if(!intersection.canTurn(this, turn)){
-                        System.out.println("Vehicle " + vehicleId + " is waiting at intersection " + nextPoint);
+                        TimeWating++;
                         return;
                     }else{
                         turning = true;
@@ -126,7 +127,6 @@ public class Vehicle {
             if(map.isIntersection(position)){
                 Intersection intersection = map.getIntersection(position);
                 if(map.isRoad(nextPoint)){
-                    System.out.println("Vehicle " + vehicleId + " is liberation at " + position);
                     intersection.removeTraffic(this);
                     turning = false;
                 }
@@ -137,6 +137,8 @@ public class Vehicle {
         if (!is_next_move_colision(nextPoint)) {
             this.position = nextPoint;
             this.path.removeFirst();
+        }else{
+            TimeWating++;
         }
 
     }

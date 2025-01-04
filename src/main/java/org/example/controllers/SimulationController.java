@@ -39,6 +39,11 @@ public class SimulationController {
         map.setVehicles(vehicles);
     }
 
+    public void addVehicles(int numVehicles){
+        generateNVehicles(numVehicles, map);
+        map.setVehicles(vehicles);
+    }
+
     /**
      * Retourne la carte de la simulation.
      *
@@ -80,6 +85,7 @@ public class SimulationController {
             } while (!isValidDestinationPoint(destination, map) || isStartCloseToDestination(starting, destination));
 
             Vehicle vehicle;
+
             switch (rand.nextInt(3)) {
                 case 0:
                     vehicle = new Car(destination, starting, 1);
@@ -93,6 +99,7 @@ public class SimulationController {
                     break;
             }
             vehicle.calculatePath(map);
+            vehicle.setSimulationController(this);
             vehicles.add(vehicle);
         }
     }
