@@ -50,7 +50,7 @@ public class Map{
         return this.laneDirections[p.x][p.y];
     }
 
-    public void setLanesDirection() {
+    public synchronized void setLanesDirection() {
        for (int i = 0; i < this.width; i++ ){
            for (int j = 0; j < this.height; j++){
                if(this.grille[j][i] == 1){
@@ -220,7 +220,7 @@ public class Map{
      * @param n Number of intersections to set
      * @throws Exception
      */
-    public void setIntersections(int n) throws Exception {
+    public synchronized void setIntersections(int n) throws Exception {
         for (int i = 0; i < n; i++) {
             Random random = new Random();
             int x = random.nextInt(this.height - 3) + 1;
@@ -418,7 +418,7 @@ public class Map{
      * @param current Current point
      * @return List of neighbors
      */
-    public List<Point> ContinueInDirection(Point current) {
+    public synchronized List<Point> ContinueInDirection(Point current) {
         List<Point> neighbors = new ArrayList<>();
         neighbors.add(new Point(current.x + 1, current.y));
         neighbors.add(new Point(current.x - 1, current.y));

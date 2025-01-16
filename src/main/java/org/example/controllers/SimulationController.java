@@ -3,10 +3,7 @@ package org.example.controllers;
 
 import org.example.models.map.LaneDirection;
 import org.example.models.map.Map;
-import org.example.models.vehicles.Bus;
-import org.example.models.vehicles.Car;
-import org.example.models.vehicles.Truck;
-import org.example.models.vehicles.Vehicle;
+import org.example.models.vehicles.*;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -37,6 +34,12 @@ public class SimulationController {
         vehicles = new ArrayList<>();
         generateNVehicles(numVehicles, map);
         map.setVehicles(vehicles);
+
+        // Start the vehicle threads (un thread pour chaque véhicule).
+        for (Vehicle vehicle : vehicles) {
+            VehicleThread vehicleThread = new VehicleThread(vehicle, map);
+            vehicleThread.start();
+        }
     }
 
     public void addVehicles(int numVehicles){

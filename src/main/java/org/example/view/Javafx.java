@@ -5,6 +5,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -17,6 +18,9 @@ import org.example.models.vehicles.Vehicle;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
+import javafx.scene.image.Image;
+
+
 
 /**
  * Classe Javafx
@@ -28,19 +32,30 @@ public class Javafx extends Application {
     private List<Vehicle> vehicles;
     private GridPane gridPane;
     public static int TotalWaitingTime = 0;
-    private int TimeUnit = 250;
+    private int TimeUnit = 500;
     private int peakVehicles ;
     private boolean addingVehicles = true;
     private int count = 0;
+
+    // Load images
+    private javafx.scene.image.Image northImage;
+    private javafx.scene.image.Image southImage;
+    private javafx.scene.image.Image eastImage;
+    private javafx.scene.image.Image westImage;
 
     /**
      * Méthode start
      * pour démarrer l'interface graphique
      * @param primaryStage
-     * @throws Exception
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // Load images
+        northImage = new Image("file:src/main/resources/NORTH.png");
+        southImage = new Image("file:src/main/resources/SOUTH.png");
+        eastImage = new Image("file:src/main/resources/EAST.png");
+        westImage = new Image("file:src/main/resources/WEST.png");
+
         simulationController = new SimulationController();
         simulationController.initializeSimulation(50, 35,5 ,20 );
         peakVehicles = 100;
@@ -124,8 +139,17 @@ public class Javafx extends Application {
         while (iterator.hasNext()) {
             Vehicle vehicle = iterator.next();
             vehicle.moveToNextPoint(map);
-            Rectangle rect = new Rectangle(19, 19, Color.BLUE);
-            gridPane.add(rect, vehicle.getPosition().y, vehicle.getPosition().x);
+            //Rectangle rect = new Rectangle(19, 19, Color.BLUE);
+            //gridPane.add(rect, vehicle.getPosition().y, vehicle.getPosition().x);
+
+            // Determine the direction of the vehicle
+            Image vehicleImage = getVehicleImage(vehicle);
+
+            ImageView imageView = new ImageView(vehicleImage);
+            imageView.setFitWidth(15);
+            imageView.setFitHeight(15);
+            gridPane.add(imageView, vehicle.getPosition().y, vehicle.getPosition().x);
+
             // removes the vehicle from the list if it has arrived
             if (vehicle.isArrived()) {
                 if (!vehicle.getPosition().equals(new Point(0, 0))) {
@@ -133,9 +157,24 @@ public class Javafx extends Application {
                 }
                 iterator.remove();
                 vehicle.setPosition(new Point(0, 0));
-                rect.setFill(Color.GREEN);
+                //rect.setFill(Color.GREEN);
 
             }
+        }
+    }
+
+    private Image getVehicleImage(Vehicle vehicle) {
+        Point current = vehicle.getPosition();
+        Point next = vehicle.getPath().isEmpty() ? current : vehicle.getPath().get(0);
+
+        if (next.x < current.x) {
+            return northImage;
+        } else if (next.x > current.x) {
+            return southImage;
+        } else if (next.y > current.y) {
+            return eastImage;
+        } else {
+            return westImage;
         }
     }
 

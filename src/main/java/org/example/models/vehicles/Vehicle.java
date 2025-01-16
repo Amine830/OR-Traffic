@@ -42,11 +42,6 @@ public class Vehicle {
         this.simulationController = simulationController;
     }
 
-    public Point getPosition() {
-        return position;
-    }
-
-    public boolean isArrived() {return arrived;}
 
     public int getSpeed() {
         return speed;
@@ -64,22 +59,29 @@ public class Vehicle {
         this.position = position;
     }
 
-    public List<Point> getPath() {
-        return path;
-    }
-
     public boolean isCalculated() {
         return calculated;
     }
 
+    // Synchronized methods needed...
+    public synchronized Point getPosition() {
+        return position;
+    }
 
+    public synchronized List<Point> getPath() {
+        return path;
+    }
+
+    public synchronized boolean isArrived() {
+        return arrived;
+    }
 
     /**
      * Se déplacer vers la destination.
      *
      *
      */
-    public void moveToNextPoint(Map map) {
+    public synchronized void moveToNextPoint(Map map) {
 
         if (position.equals(destination)) {
             arrived = true;

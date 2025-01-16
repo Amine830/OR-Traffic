@@ -24,21 +24,21 @@ public class Intersection {
 
     HashMap<Vehicle, Turns> Traffic = new HashMap<>();
 
-    public void addTraffic(Vehicle v, Turns t){
+    public synchronized void addTraffic(Vehicle v, Turns t){
         Traffic.put(v, t);
     }
 
-    public void removeTraffic(Vehicle v){
+    public synchronized void removeTraffic(Vehicle v){
         Traffic.remove(v);
     }
 
 
 
-    public boolean hasTraffic(Vehicle v){
+    public synchronized boolean hasTraffic(Vehicle v){
         return Traffic.containsKey(v);
     }
 
-    public boolean canTurn(Vehicle v, Turns t) {
+    public synchronized boolean canTurn(Vehicle v, Turns t) {
         // Check all current traffic to see if there's a conflict
         for (Map.Entry<Vehicle, Turns> entry : Traffic.entrySet()) {
             Vehicle otherVehicle = entry.getKey();
