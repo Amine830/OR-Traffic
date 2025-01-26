@@ -19,6 +19,7 @@ public class Vehicle {
     private Point position;
     private int speed;
     private List<Point> path = new ArrayList<>();
+    private List<Intersection> intersectionsToPass = new ArrayList<>();
     private boolean calculated = false;
     private boolean arrived = false;
     public boolean turning = false;
@@ -101,6 +102,7 @@ public class Vehicle {
         if(map.isIntersection(nextPoint)){
             //if the vehicle is the first in the queue
             Intersection intersection = map.getIntersection(nextPoint);
+            intersectionsToPass.remove(intersection);
             Turns turn = null;
             if(path.size() >= 4){
                 turn = getTurn(position, path.get(3), map);
@@ -156,13 +158,28 @@ public class Vehicle {
     public void calculatePath(Map map) {
         List<List<Point>> paths = new ArrayList<>();
 
-        checkAllPaths(map, paths);
+        checkAllPaths(map, paths, position, destination);
+
         System.out.println("Paths for vehicle " + vehicleId + " : " + paths.size());
         if(paths.isEmpty()) {
             System.out.println("No path found for vehicle " + vehicleId);
             return;
         }
-        path = paths.getFirst();
+        //get the shortest path
+        for(List<Point> path : paths){
+            if(this.path.isEmpty() || path.size() < this.path.size()){
+                this.path = path;
+            }
+        }
+
+        for(Point point : path){
+            if(map.isIntersection(point)){
+                Intersection intersection = map.getIntersection(point);
+                if(!intersectionsToPass.contains(intersection)){
+                    intersectionsToPass.add(intersection);
+                }
+            }
+        }
 
         path.removeFirst();
 
@@ -177,21 +194,19 @@ public class Vehicle {
      * @param map la carte sur laquelle le véhicule se déplace.
      * @return le prochain point.
      */
-    public void checkAllPaths(Map map, List<List<Point>> paths) {
+    public void checkAllPaths(Map map, List<List<Point>> paths, Point start, Point destination) {
         Queue<List<Point>> queue = new LinkedList<>();
-        Set<Point> visited = new HashSet<>();
 
         // Initialize the BFS with the starting position
         List<Point> initialPath = new ArrayList<>();
-        initialPath.add(position);
+        initialPath.add(start);
         queue.add(initialPath);
-        visited.add(position);
 
         while (!queue.isEmpty()) {
             List<Point> currentPath = queue.poll();
-            Point currentPoint = currentPath.getLast();
+            Point currentPoint = currentPath.get(currentPath.size() - 1);
 
-            // If the current point is a destination, store the path
+            // If the current point is the destination, store the path
             if (currentPoint.equals(destination)) {
                 paths.add(new ArrayList<>(currentPath));
                 continue; // Continue to explore other paths
@@ -202,8 +217,8 @@ public class Vehicle {
                 List<Point> neighbors = map.ContinueInDirection(currentPoint);
 
                 for (Point neighbor : neighbors) {
-                    if (!visited.contains(neighbor)) {
-                        visited.add(neighbor);
+                    // Avoid cycles in the current path
+                    if (!currentPath.contains(neighbor)) {
                         List<Point> newPath = new ArrayList<>(currentPath);
                         newPath.add(neighbor);
                         queue.add(newPath);
@@ -216,8 +231,8 @@ public class Vehicle {
                 List<Point> neighbors = map.ContinueInDirection(currentPoint);
 
                 for (Point neighbor : neighbors) {
-                    if (!visited.contains(neighbor)) {
-                        visited.add(neighbor);
+                    // Avoid cycles in the current path
+                    if (!currentPath.contains(neighbor)) {
                         List<Point> newPath = new ArrayList<>(currentPath);
                         newPath.add(neighbor);
                         queue.add(newPath);
@@ -226,7 +241,6 @@ public class Vehicle {
             }
         }
     }
-
 
 
     public boolean is_next_move_colision(Point next_move){
@@ -239,12 +253,6 @@ public class Vehicle {
         }
 
         return false;
-    }
-
-
-
-    private double getDistance(Point a, Point b) {
-        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
     }
 
 

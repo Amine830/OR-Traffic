@@ -51,13 +51,13 @@ public class Javafx extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Load images
-        northImage = new Image("file:src/main/resources/NORTH.png");
-        southImage = new Image("file:src/main/resources/SOUTH.png");
-        eastImage = new Image("file:src/main/resources/EAST.png");
-        westImage = new Image("file:src/main/resources/WEST.png");
+        northImage = new Image("file:src/main/resources/N.png");
+        southImage = new Image("file:src/main/resources/S.png");
+        eastImage = new Image("file:src/main/resources/E.png");
+        westImage = new Image("file:src/main/resources/W.png");
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(50, 35,5 ,20 );
+        simulationController.initializeSimulation(50, 35,4 ,1 );
         peakVehicles = 100;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
@@ -65,7 +65,7 @@ public class Javafx extends Application {
         gridPane = new GridPane();
         drawMap();
         //map.Print_Map();
-        map.Print_Lane_Directions();
+        //map.Print_Lane_Directions();
 
         Scene scene = new Scene(gridPane, map.width * 20, map.height * 20);
         primaryStage.setScene(scene);
@@ -76,7 +76,7 @@ public class Javafx extends Application {
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TimeUnit), e -> {
             updateVehicles();
-            manageVehicleCount();
+            //manageVehicleCount();
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
