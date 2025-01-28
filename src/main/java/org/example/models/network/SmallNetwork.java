@@ -35,29 +35,6 @@ public class SmallNetwork  {
         vehicles.add(vehicle);
     }
 
-//    public synchronized boolean canTurn(Vehicle v, Turns t) {
-//        // Check all current traffic to see if there's a conflict
-//        for (Map.Entry<Vehicle, Integer> entry : Traffic.entrySet()) {
-//            Vehicle otherVehicle = entry.getKey();
-//            Turns otherTurn = otherVehicle.nextTurn;
-//            if(!otherVehicle.turning){
-//                continue;
-//            }
-//
-//            // Skip the current vehicle itself
-//            if (otherVehicle.equals(v)) {
-//                continue;
-//            }
-//
-//            // Check for conflicts between the current vehicle's desired turn and others
-//            if (isConflict(t, otherTurn)) {
-//                return false; // Conflict detected
-//            }
-//        }
-//        return true; // No conflict
-//    }
-
-
 
 
 }

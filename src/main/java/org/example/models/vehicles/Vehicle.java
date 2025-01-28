@@ -167,7 +167,14 @@ public class Vehicle {
                 Intersection intersection = map.getIntersection(position);
                 if(map.isRoad(nextPoint)){
                     localnetwork.getVehicles().remove(this);
-                    localnetwork = null;
+                    if(localnetwork.getVehicles().isEmpty()){
+                        //destroy the network
+                        localnetwork = null;
+                    }else{
+                        //gets the new network
+                        localnetwork = get_local_network();
+                    }
+
                     turning = false;
                     nextTurn = null;
                 }
