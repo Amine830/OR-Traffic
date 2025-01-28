@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -42,6 +43,12 @@ public class Javafx extends Application {
     private javafx.scene.image.Image southImage;
     private javafx.scene.image.Image eastImage;
     private javafx.scene.image.Image westImage;
+    private Image Nroad;
+    private Image Sroad;
+    private Image Eroad;
+    private Image Wroad;
+    private Image Inter;
+    private Image Building1;
 
     /**
      * Méthode start
@@ -55,6 +62,12 @@ public class Javafx extends Application {
         southImage = new Image("file:src/main/resources/S.png");
         eastImage = new Image("file:src/main/resources/E.png");
         westImage = new Image("file:src/main/resources/W.png");
+        Nroad = new Image("file:src/main/resources/north.jpg");
+        Sroad = new Image("file:src/main/resources/south.jpg");
+        Eroad = new Image("file:src/main/resources/east.jpg");
+        Wroad = new Image("file:src/main/resources/west.jpg");
+        Inter = new Image("file:src/main/resources/inter.jpg");
+        Building1 = new Image("file:src/main/resources/building1.png");
 
         simulationController = new SimulationController();
         simulationController.initializeSimulation(50, 35,5 ,20 );
@@ -106,13 +119,26 @@ public class Javafx extends Application {
                 Rectangle rect = new Rectangle(20, 20);
                 switch (map.grille[i][j]) {
                     case 1:
-                        rect.setFill(Color.GRAY);
+                        switch (map.laneDirections[i][j]) {
+                            case NORTH:
+                                rect.setFill(new ImagePattern(Nroad));
+                                break;
+                            case SOUTH:
+                                rect.setFill(new ImagePattern(Sroad));
+                                break;
+                            case EAST:
+                                rect.setFill(new ImagePattern(Eroad));
+                                break;
+                            case WEST:
+                                rect.setFill(new ImagePattern(Wroad));
+                                break;
+                        }
                         break;
                     case 2:
-                        rect.setFill(Color.RED);
+                        rect.setFill(new ImagePattern(Inter));
                         break;
                     default:
-                        rect.setFill(Color.GREEN);
+                        rect.setFill(Color.GRAY);
                         break;
                 }
                 gridPane.add(rect, j, i);

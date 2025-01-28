@@ -24,7 +24,7 @@ public class Vehicle {
     private boolean arrived = false;
     public boolean turning = false;
     public int TimeWating = 0;
-    List<List<Point>> paths = new ArrayList<>();
+
     public Turns nextTurn = null;
 
     public SmallNetwork localnetwork;
@@ -83,7 +83,6 @@ public class Vehicle {
 
 
     private synchronized SmallNetwork get_local_network(){
-        System.out.println("Vehicle " + vehicleId + " is getting the local network");
         if(intersectionsToPass.isEmpty()){
             return null;
         }
@@ -128,13 +127,22 @@ public class Vehicle {
         }
         Point nextPoint = path.getFirst();
 
-        if(localnetwork == null) {
-            localnetwork = get_local_network();
-        }
+
 
         if(nextTurn == null){
             nextTurn = getTurn(position, path, map);
         }
+
+        if(!intersectionsToPass.isEmpty()){
+            Intersection nextIntersection = intersectionsToPass.getFirst();
+        int distance = distance(position, nextIntersection.getPos());
+        if(distance <= 4 &&localnetwork == null) {
+            localnetwork = get_local_network();
+        }
+        }
+
+
+
 
 
         if(!turning) {
@@ -164,7 +172,7 @@ public class Vehicle {
 
         if(turning){
             if(map.isIntersection(position)){
-                Intersection intersection = map.getIntersection(position);
+
                 if(map.isRoad(nextPoint)){
                     localnetwork.getVehicles().remove(this);
                     if(localnetwork.getVehicles().isEmpty()){
@@ -201,10 +209,9 @@ public class Vehicle {
 
     public void calculatePath(Map map) {
 
-
+        List<List<Point>> paths = new ArrayList<>();
         checkAllPaths(map, paths, position, destination);
 
-        System.out.println("Paths for vehicle " + vehicleId + " : " + paths.size());
         if(paths.isEmpty()) {
             System.out.println("No path found for vehicle " + vehicleId);
             return;
@@ -475,5 +482,9 @@ public class Vehicle {
 
         }
         return false;
+    }
+
+    private int distance(Point p1, Point p2){
+        return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
     }
 }
