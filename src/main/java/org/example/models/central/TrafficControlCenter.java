@@ -19,9 +19,6 @@ public class TrafficControlCenter {
     }
 
     public void manageTraffic() {
-        for (Intersection intersection : intersections) {
-            intersection.manageTraffic();
-        }
         for (Vehicle vehicle : vehicles) {
             // TODO : gestion du trafic des véhicules
         }

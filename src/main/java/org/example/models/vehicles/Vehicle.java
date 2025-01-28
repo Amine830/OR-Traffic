@@ -5,6 +5,7 @@ import org.example.models.map.Intersection;
 import org.example.models.map.LaneDirection;
 import org.example.models.map.Map;
 import org.example.models.map.Turns;
+import org.example.models.network.SmallNetwork;
 
 import java.awt.Point;
 import java.util.*;
@@ -20,10 +21,14 @@ public class Vehicle {
     private int speed;
     private List<Point> path = new ArrayList<>();
     private List<Intersection> intersectionsToPass = new ArrayList<>();
-    private boolean calculated = false;
     private boolean arrived = false;
     public boolean turning = false;
     public int TimeWating = 0;
+    List<List<Point>> paths = new ArrayList<>();
+    public Turns nextTurn = null;
+
+    public SmallNetwork localnetwork;
+
 
     private SimulationController simulationController;
 
@@ -60,9 +65,7 @@ public class Vehicle {
         this.position = position;
     }
 
-    public boolean isCalculated() {
-        return calculated;
-    }
+
 
     // Synchronized methods needed...
     public synchronized Point getPosition() {
@@ -77,12 +80,43 @@ public class Vehicle {
         return arrived;
     }
 
+
+
+    private synchronized SmallNetwork get_local_network(){
+        System.out.println("Vehicle " + vehicleId + " is getting the local network");
+        if(intersectionsToPass.isEmpty()){
+            return null;
+        }
+        List<Vehicle> vehicles = simulationController.getVehicles();
+        for(Vehicle vehicle : vehicles){
+            if(vehicle.localnetwork != null){
+                if(vehicle.localnetwork.getNetworkIntersection().equals(intersectionsToPass.getFirst())
+                        && vehicle!= this){
+                    vehicle.localnetwork.addVehicle(this);
+                    return vehicle.localnetwork;
+                }
+            }
+        }
+        return new SmallNetwork(intersectionsToPass.getFirst(),this);
+    }
+
     /**
      * Se déplacer vers la destination.
      *
      *
      */
+
+
     public synchronized void moveToNextPoint(Map map) {
+
+
+        //before moving checks if the vehicle is at the destination
+        // gets the localnetwork if it is null
+        // gets the next turn if it is null
+        // if the next point is an intersection, checks if the vehicle is the first in the queue
+        // the queue gets updated based on the vehicle distance to the intersection and wether it
+        //can turn
+        // if the vehicle can't turn it waits
 
         if (position.equals(destination)) {
             arrived = true;
@@ -94,35 +128,36 @@ public class Vehicle {
         }
         Point nextPoint = path.getFirst();
 
-        //here put the priority logic for the intersection
+        if(localnetwork == null) {
+            localnetwork = get_local_network();
+        }
 
-        //prototype
+        if(nextTurn == null){
+            nextTurn = getTurn(position, path, map);
+        }
 
-        if(!turning){
-        if(map.isIntersection(nextPoint)){
-            //if the vehicle is the first in the queue
-            Intersection intersection = map.getIntersection(nextPoint);
-            intersectionsToPass.remove(intersection);
-            Turns turn = null;
-            if(path.size() >= 4){
-                turn = getTurn(position, path.get(3), map);
-            }else if(path.size() == 3){
-                turn = getTurn(position, path.get(2), map);
-            } else if(path.size() == 2) {
-                turn = getTurn(position, path.get(1), map);
-            }
 
-            if(!intersection.hasTraffic(this)){
-                intersection.addTraffic(this, turn);
+        if(!turning) {
+            if (map.isIntersection(nextPoint)) {
+                //if the vehicle is the first in the queue
 
-            }
 
-                    if(!intersection.canTurn(this, turn)){
-                        TimeWating++;
-                        return;
-                    }else{
-                        turning = true;
+
+                //checks your order in the queue
+
+                for (Vehicle v : localnetwork.getVehicles()) {
+                    if (v.equals(this)) {
+                        continue;
                     }
+                    if (v.turning) {
+                        if (isConflict(nextTurn, v.nextTurn)) {
+                            TimeWating++;
+                            return;
+                        }
+                    }
+                }
+                intersectionsToPass.removeFirst();
+                turning = true;
 
             }
         }
@@ -131,8 +166,10 @@ public class Vehicle {
             if(map.isIntersection(position)){
                 Intersection intersection = map.getIntersection(position);
                 if(map.isRoad(nextPoint)){
-                    intersection.removeTraffic(this);
+                    localnetwork.getVehicles().remove(this);
+                    localnetwork = null;
                     turning = false;
+                    nextTurn = null;
                 }
             }
         }
@@ -156,7 +193,7 @@ public class Vehicle {
      */
 
     public void calculatePath(Map map) {
-        List<List<Point>> paths = new ArrayList<>();
+
 
         checkAllPaths(map, paths, position, destination);
 
@@ -166,9 +203,11 @@ public class Vehicle {
             return;
         }
         //get the shortest path
-        for(List<Point> path : paths){
-            if(this.path.isEmpty() || path.size() < this.path.size()){
-                this.path = path;
+        for(List<Point> p : paths){
+            //condition here to add if there is a intersection to avoid
+
+            if(p.size() < this.path.size() || this.path.size()<2){
+                this.path = p;
             }
         }
 
@@ -183,7 +222,7 @@ public class Vehicle {
 
         path.removeFirst();
 
-        calculated = true;
+
 
     }
 
@@ -209,6 +248,9 @@ public class Vehicle {
             // If the current point is the destination, store the path
             if (currentPoint.equals(destination)) {
                 paths.add(new ArrayList<>(currentPath));
+                if(paths.size() > 0){
+                    return;
+                }
                 continue; // Continue to explore other paths
             }
 
@@ -256,10 +298,33 @@ public class Vehicle {
     }
 
 
-    private Turns getTurn (Point start, Point end , Map map){
+    private Turns getTurn (Point start, List<Point> path , Map map){
 
         LaneDirection startDirection = map.getlinedirection(start);
-        LaneDirection endDirection = map.getlinedirection(end);
+        LaneDirection endDirection = null;
+        int indexOfStart = path.indexOf(start);
+        if(indexOfStart == -1){
+            indexOfStart = 0;
+        }
+        //go from this index till we find a intersection
+        int i;
+        for( i = indexOfStart; i < path.size(); i++){
+            //if we find the vehicule destination
+            if(path.get(i).equals(destination)){
+               return null;
+            }
+            if(map.isIntersection(path.get(i))){
+                break;
+            }
+        }
+        for (int j = i; j < path.size(); j++){
+            if(map.isRoad(path.get(j))){
+                endDirection = map.getlinedirection(path.get(j));
+                break;
+            }
+        }
+
+
 
         switch (startDirection) {
             case NORTH:
@@ -303,5 +368,105 @@ public class Vehicle {
                 return null;
         }
 
+    }
+
+    private boolean isConflict(Turns t, Turns otherTurn) {
+        switch (t){
+            case FROM_NORTH_STRAIGHT -> {
+                return (otherTurn == Turns.FROM_SOUTH_LEFT ||
+                        otherTurn == Turns.FROM_EAST_STRAIGHT ||
+                        otherTurn == Turns.FROM_EAST_RIGHT ||
+                        otherTurn == Turns.FROM_WEST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_RIGHT ||
+                        otherTurn == Turns.FROM_WEST_LEFT);
+            }
+            case FROM_NORTH_LEFT -> {
+                return (otherTurn == Turns.FROM_SOUTH_LEFT ||
+                        otherTurn == Turns.FROM_SOUTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_RIGHT ||
+                        otherTurn == Turns.FROM_WEST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_RIGHT ||
+                        otherTurn == Turns.FROM_WEST_LEFT ||
+                        otherTurn == Turns.FROM_EAST_STRAIGHT ||
+                        otherTurn == Turns.FROM_EAST_LEFT );
+            }
+            case FROM_NORTH_RIGHT -> {
+                return (otherTurn == Turns.FROM_SOUTH_LEFT ||
+                        otherTurn == Turns.FROM_EAST_STRAIGHT ||
+                        otherTurn == Turns.FROM_EAST_LEFT );
+            }
+            case FROM_SOUTH_STRAIGHT -> {
+                return (otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_EAST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_LEFT ||
+                        otherTurn == Turns.FROM_EAST_RIGHT ||
+                        otherTurn == Turns.FROM_EAST_LEFT);
+            }
+            case FROM_SOUTH_LEFT -> {
+                return (otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_NORTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_NORTH_RIGHT ||
+                        otherTurn == Turns.FROM_WEST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_RIGHT ||
+                        otherTurn == Turns.FROM_WEST_LEFT ||
+                        otherTurn == Turns.FROM_EAST_STRAIGHT ||
+                        otherTurn == Turns.FROM_EAST_LEFT );
+            }
+            case FROM_SOUTH_RIGHT -> {
+                return (otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_WEST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_LEFT );
+            }
+            case FROM_EAST_STRAIGHT -> {
+                return (otherTurn == Turns.FROM_WEST_LEFT ||
+                        otherTurn == Turns.FROM_NORTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_NORTH_RIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_LEFT
+                );
+            }
+            case FROM_EAST_LEFT -> {
+                return (otherTurn == Turns.FROM_WEST_LEFT ||
+                        otherTurn == Turns.FROM_WEST_STRAIGHT ||
+                        otherTurn == Turns.FROM_WEST_RIGHT ||
+                        otherTurn == Turns.FROM_NORTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_NORTH_RIGHT ||
+                        otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_SOUTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_LEFT );
+            }
+            case FROM_EAST_RIGHT -> {
+                return (otherTurn == Turns.FROM_WEST_LEFT ||
+                        otherTurn == Turns.FROM_SOUTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_LEFT );
+            }
+            case FROM_WEST_STRAIGHT -> {
+                return (otherTurn == Turns.FROM_EAST_LEFT ||
+                        otherTurn == Turns.FROM_NORTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_SOUTH_LEFT ||
+                        otherTurn == Turns.FROM_SOUTH_RIGHT);
+            }
+            case FROM_WEST_LEFT -> {
+                return (otherTurn == Turns.FROM_EAST_LEFT ||
+                        otherTurn == Turns.FROM_EAST_STRAIGHT ||
+                        otherTurn == Turns.FROM_EAST_RIGHT ||
+                        otherTurn == Turns.FROM_NORTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_NORTH_RIGHT ||
+                        otherTurn == Turns.FROM_NORTH_LEFT ||
+                        otherTurn == Turns.FROM_SOUTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_SOUTH_LEFT );
+            }
+            case FROM_WEST_RIGHT -> {
+                return (otherTurn == Turns.FROM_EAST_LEFT ||
+                        otherTurn == Turns.FROM_NORTH_STRAIGHT ||
+                        otherTurn == Turns.FROM_NORTH_LEFT );
+            }
+
+        }
+        return false;
     }
 }

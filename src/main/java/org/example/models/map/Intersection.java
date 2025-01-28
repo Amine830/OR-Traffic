@@ -173,13 +173,6 @@ public class Intersection {
         return type;
     }
 
-    public void manageTraffic() {
-        for (Vehicle vehicle : vehicles) {
-            //vehicle.calculateNextPoint(); //TODO
-        }
-    }
-
-
 
 
 }

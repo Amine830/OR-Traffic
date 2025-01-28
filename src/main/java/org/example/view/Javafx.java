@@ -57,7 +57,7 @@ public class Javafx extends Application {
         westImage = new Image("file:src/main/resources/W.png");
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(50, 35,4 ,1 );
+        simulationController.initializeSimulation(50, 35,5 ,20 );
         peakVehicles = 100;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
@@ -76,7 +76,7 @@ public class Javafx extends Application {
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TimeUnit), e -> {
             updateVehicles();
-            //manageVehicleCount();
+            manageVehicleCount();
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
