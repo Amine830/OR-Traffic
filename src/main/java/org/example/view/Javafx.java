@@ -58,10 +58,10 @@ public class Javafx extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Load images
-        northImage = new Image("file:src/main/resources/N.png");
-        southImage = new Image("file:src/main/resources/S.png");
-        eastImage = new Image("file:src/main/resources/E.png");
-        westImage = new Image("file:src/main/resources/W.png");
+        northImage = new Image("file:src/main/resources/N.jpg");
+        southImage = new Image("file:src/main/resources/S.jpg");
+        eastImage = new Image("file:src/main/resources/E.jpg");
+        westImage = new Image("file:src/main/resources/W.jpg");
         Nroad = new Image("file:src/main/resources/north.jpg");
         Sroad = new Image("file:src/main/resources/south.jpg");
         Eroad = new Image("file:src/main/resources/east.jpg");
@@ -70,15 +70,13 @@ public class Javafx extends Application {
         Building1 = new Image("file:src/main/resources/building1.png");
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(50, 35,5 ,20 );
-        peakVehicles = 100;
+        simulationController.initializeSimulation(20,20 ,2,20 );
+        peakVehicles = 50;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
 
         gridPane = new GridPane();
         drawMap();
-        //map.Print_Map();
-        //map.Print_Lane_Directions();
 
         Scene scene = new Scene(gridPane, map.width * 20, map.height * 20);
         primaryStage.setScene(scene);

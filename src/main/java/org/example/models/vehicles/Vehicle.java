@@ -24,6 +24,8 @@ public class Vehicle {
     private boolean arrived = false;
     public boolean turning = false;
     public int TimeWating = 0;
+    public int vehiclesBehind = 0;
+    public int distance = 0;
 
     public Turns nextTurn = null;
 
@@ -135,10 +137,14 @@ public class Vehicle {
 
         if(!intersectionsToPass.isEmpty()){
             Intersection nextIntersection = intersectionsToPass.getFirst();
-        int distance = distance(position, nextIntersection.getPos());
-        if(distance <= 4 &&localnetwork == null) {
+            distance = distance(position, nextIntersection.getPos());
+        if(localnetwork == null) {
             localnetwork = get_local_network();
         }
+        if(distance<4){
+            localnetwork.addVehicleToQueue(this);
+        }
+
         }
 
 
@@ -146,25 +152,39 @@ public class Vehicle {
 
 
         if(!turning) {
+
+             getVehiclesBehind();
+
+
+
+
+
+
+            //avoids collision in the intersection
             if (map.isIntersection(nextPoint)) {
                 //if the vehicle is the first in the queue
-
-
-
                 //checks your order in the queue
+
+                if(!localnetwork.is_first(this)) {
+                    return;
+                }
 
                 for (Vehicle v : localnetwork.getVehicles()) {
                     if (v.equals(this)) {
                         continue;
                     }
+
                     if (v.turning) {
                         if (isConflict(nextTurn, v.nextTurn)) {
                             TimeWating++;
                             return;
                         }
                     }
+
+
                 }
                 intersectionsToPass.removeFirst();
+                localnetwork.removeVehicle(this);
                 turning = true;
 
             }
@@ -176,12 +196,12 @@ public class Vehicle {
                 if(map.isRoad(nextPoint)){
                     localnetwork.getVehicles().remove(this);
                     if(localnetwork.getVehicles().isEmpty()){
-                        //destroy the network
                         localnetwork = null;
                     }else{
-                        //gets the new network
                         localnetwork = get_local_network();
                     }
+
+
 
                     turning = false;
                     nextTurn = null;
@@ -486,5 +506,60 @@ public class Vehicle {
 
     private int distance(Point p1, Point p2){
         return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+    }
+
+    public boolean is_someone_infront(){
+        if(intersectionsToPass.isEmpty()|| nextTurn == null){
+            return false;
+        }
+        String commingFrom = this.nextTurn.toString().split("_")[1];
+        Intersection intersection = this.intersectionsToPass.getFirst();
+        for (Vehicle vehicle : localnetwork.getVehicles()) {
+            if(vehicle.equals(this) || vehicle.intersectionsToPass.isEmpty() || vehicle.nextTurn == null){
+                continue;
+            }
+            String otherCommingFrom = vehicle.nextTurn.toString().split("_")[1];
+            if (commingFrom.equals(otherCommingFrom) &&
+                    distance(vehicle.position, intersection.getPos()) <
+                            distance(this.position, intersection.getPos())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void getVehiclesBehind() {
+        if(intersectionsToPass.isEmpty()|| nextTurn == null){
+            return;
+        }
+        vehiclesBehind = 0;
+        String commingFrom = this.nextTurn.toString().split("_")[1];
+        Intersection intersection = this.intersectionsToPass.getFirst();
+        for (Vehicle vehicle : simulationController.getVehicles()) {
+            if(vehicle.equals(this) || vehicle.intersectionsToPass.isEmpty() || vehicle.nextTurn == null){
+                continue;
+            }
+            String otherCommingFrom = vehicle.nextTurn.toString().split("_")[1];
+            if (commingFrom.equals(otherCommingFrom) &&
+                    distance(vehicle.position, intersection.getPos()) >
+                            distance(this.position, intersection.getPos())) {
+                vehiclesBehind++;
+            }
+        }
+    }
+
+    private int traffic_in_area(Intersection intersection)
+    {
+        int traffic = 0;
+        for (Vehicle vehicle : simulationController.getVehicles())
+        {
+            if (!vehicle.intersectionsToPass.isEmpty() &&
+                    vehicle.intersectionsToPass.getFirst().equals(intersection))
+            {
+
+                traffic++;
+            }
+        }
+        return traffic;
     }
 }
