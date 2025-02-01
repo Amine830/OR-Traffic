@@ -12,5 +12,5 @@ public enum Turns {
     FROM_SOUTH_RIGHT,
     FROM_WEST_LEFT,
     FROM_WEST_STRAIGHT,
-    FROM_WEST_RIGHT
+    FROM_WEST_RIGHT,
 }

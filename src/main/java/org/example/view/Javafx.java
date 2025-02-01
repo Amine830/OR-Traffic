@@ -4,6 +4,7 @@ package org.example.view;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -19,6 +20,8 @@ import org.example.models.vehicles.Vehicle;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import javafx.scene.image.Image;
 
 
@@ -33,22 +36,18 @@ public class Javafx extends Application {
     private List<Vehicle> vehicles;
     private GridPane gridPane;
     public static int TotalWaitingTime = 0;
-    private int TimeUnit = 500;
+    private int TimeUnit = 250;
     private int peakVehicles ;
     private boolean addingVehicles = true;
     private int count = 0;
 
     // Load images
-    private javafx.scene.image.Image northImage;
-    private javafx.scene.image.Image southImage;
-    private javafx.scene.image.Image eastImage;
-    private javafx.scene.image.Image westImage;
     private Image Nroad;
     private Image Sroad;
     private Image Eroad;
     private Image Wroad;
     private Image Inter;
-    private Image Building1;
+
 
     /**
      * Méthode start
@@ -57,17 +56,13 @@ public class Javafx extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Load images
-        northImage = new Image("file:src/main/resources/N.jpg");
-        southImage = new Image("file:src/main/resources/S.jpg");
-        eastImage = new Image("file:src/main/resources/E.jpg");
-        westImage = new Image("file:src/main/resources/W.jpg");
+
         Nroad = new Image("file:src/main/resources/north.jpg");
         Sroad = new Image("file:src/main/resources/south.jpg");
         Eroad = new Image("file:src/main/resources/east.jpg");
         Wroad = new Image("file:src/main/resources/west.jpg");
         Inter = new Image("file:src/main/resources/inter.jpg");
-        Building1 = new Image("file:src/main/resources/building1.png");
+
 
         simulationController = new SimulationController();
         simulationController.initializeSimulation(20,20 ,2,20 );
@@ -83,11 +78,16 @@ public class Javafx extends Application {
         primaryStage.setTitle("Traffic Simulation");
         primaryStage.show();
 
-
-
+        simulationController.startSimulation();
+        AtomicInteger count = new AtomicInteger();
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TimeUnit), e -> {
+            //make it update the map
             updateVehicles();
-            manageVehicleCount();
+            count.getAndIncrement();
+            if(count.get() % 10 == 0){
+                manageVehicleCount();
+            }
+
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
@@ -97,7 +97,7 @@ public class Javafx extends Application {
      * managing vehicles count
      */
     private void manageVehicleCount() {
-        count = (int) (Math.random() * 5) ;
+        count = (int) (Math.random() * 10) ;
         if (addingVehicles) {
             if (vehicles.size() < peakVehicles) {
                 simulationController.addVehicles(1+ count);
@@ -149,42 +149,31 @@ public class Javafx extends Application {
      * pour mettre à jour les véhicules
      */
     private void updateVehicles() {
-        gridPane.getChildren().clear();
-        drawMap();
+        Platform.runLater(() -> {
+            gridPane.getChildren().clear();
+            drawMap();
 
+            if (vehicles.isEmpty()) {
+                System.out.println("Total Waiting Time: " + TotalWaitingTime * TimeUnit / 1000 + " seconds");
+                System.exit(0);
+            }
 
-        if(vehicles.isEmpty()){
-            System.out.println("Total Waiting Time: " + TotalWaitingTime*TimeUnit/1000 + " seconds");
-            System.exit(0);
-        }
+            Iterator<Vehicle> iterator = vehicles.iterator();
+            while (iterator.hasNext()) {
+                Vehicle vehicle = iterator.next();
 
+                Image vehicleImage = getVehicleImage(vehicle);
+                ImageView imageView = new ImageView(vehicleImage);
+                imageView.setFitWidth(15);
+                imageView.setFitHeight(15);
+                gridPane.add(imageView, vehicle.getPosition().y, vehicle.getPosition().x);
 
-        Iterator<Vehicle> iterator = vehicles.iterator();
-        while (iterator.hasNext()) {
-            Vehicle vehicle = iterator.next();
-            vehicle.moveToNextPoint(map);
-            //Rectangle rect = new Rectangle(19, 19, Color.BLUE);
-            //gridPane.add(rect, vehicle.getPosition().y, vehicle.getPosition().x);
-
-            // Determine the direction of the vehicle
-            Image vehicleImage = getVehicleImage(vehicle);
-
-            ImageView imageView = new ImageView(vehicleImage);
-            imageView.setFitWidth(15);
-            imageView.setFitHeight(15);
-            gridPane.add(imageView, vehicle.getPosition().y, vehicle.getPosition().x);
-
-            // removes the vehicle from the list if it has arrived
-            if (vehicle.isArrived()) {
-                if (!vehicle.getPosition().equals(new Point(0, 0))) {
+                if (vehicle.isArrived()) {
+                    iterator.remove();
                     TotalWaitingTime += vehicle.TimeWating;
                 }
-                iterator.remove();
-                vehicle.setPosition(new Point(0, 0));
-                //rect.setFill(Color.GREEN);
-
             }
-        }
+        });
     }
 
     private Image getVehicleImage(Vehicle vehicle) {
@@ -192,13 +181,13 @@ public class Javafx extends Application {
         Point next = vehicle.getPath().isEmpty() ? current : vehicle.getPath().get(0);
 
         if (next.x < current.x) {
-            return northImage;
+            return new Image("file:src/main/resources/N1.jpg");
         } else if (next.x > current.x) {
-            return southImage;
+            return new Image("file:src/main/resources/S1.jpg");
         } else if (next.y > current.y) {
-            return eastImage;
+            return new Image("file:src/main/resources/E1.jpg");
         } else {
-            return westImage;
+            return new Image("file:src/main/resources/W1.jpg");
         }
     }
 

@@ -1,2 +1,2 @@
-allow trafic for cars who waited to long
+optimise the application it blockes when too much threads
 make recalculations for path when trafic is to high

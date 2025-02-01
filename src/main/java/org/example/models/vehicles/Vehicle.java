@@ -15,6 +15,7 @@ import java.util.*;
  */
 public class Vehicle {
     private static int id = 0;
+    private final int vehiculeTexture;
     private final int vehicleId;
     private final Point destination;
     private Point position;
@@ -34,14 +35,18 @@ public class Vehicle {
 
     private SimulationController simulationController;
 
-    public Vehicle(Point destination, Point position, int speed) {
+    public Vehicle(Point destination, Point position, int speed , int vehiculeTexture) {
         this.destination = destination;
         this.position = position;
         this.speed = speed;
         this.vehicleId = ++id;
+        this.vehiculeTexture = vehiculeTexture;
         this.path.add(position);
     }
 
+    public int getVehiculeTexture() {
+        return vehiculeTexture;
+    }
     public Point getDestination() {
         return destination;
     }
@@ -111,6 +116,8 @@ public class Vehicle {
     public synchronized void moveToNextPoint(Map map) {
 
 
+        System.out.println(VehicleThread.currentThread().getName() + " is moving to next point");
+
         //before moving checks if the vehicle is at the destination
         // gets the localnetwork if it is null
         // gets the next turn if it is null
@@ -143,6 +150,8 @@ public class Vehicle {
         }
         if(distance<4){
             localnetwork.addVehicleToQueue(this);
+        }else{
+            localnetwork.removeVehicle(this);
         }
 
         }
@@ -161,11 +170,12 @@ public class Vehicle {
 
 
             //avoids collision in the intersection
+
             if (map.isIntersection(nextPoint)) {
                 //if the vehicle is the first in the queue
                 //checks your order in the queue
 
-                if(!localnetwork.is_first(this)) {
+                if(!localnetwork.is_first(this)){
                     return;
                 }
 
@@ -188,6 +198,7 @@ public class Vehicle {
                 turning = true;
 
             }
+
         }
 
         if(turning){
@@ -211,7 +222,9 @@ public class Vehicle {
         //----------------
 
         if (!is_next_move_colision(nextPoint)) {
+
             this.position = nextPoint;
+
             this.path.removeFirst();
         }else{
             TimeWating++;
@@ -253,7 +266,6 @@ public class Vehicle {
                 }
             }
         }
-
         path.removeFirst();
 
 
@@ -319,15 +331,18 @@ public class Vehicle {
     }
 
 
-    public boolean is_next_move_colision(Point next_move){
+    public synchronized boolean is_next_move_colision(Point next_move){
+        //System.out.println(Thread.currentThread().getName() + ": BLOCKING HERE");
         List<Point> vehicles_positions = simulationController.getVehiclesPositions();
         for (Point vehicle_position : vehicles_positions){
 
             if (vehicle_position.equals(next_move)){
+                //System.out.println(Thread.currentThread().getName() + ": TRUE HERE");
                 return true;
             }
         }
 
+        //System.out.println(Thread.currentThread().getName() + ": FALSE HERE");
         return false;
     }
 
@@ -404,7 +419,8 @@ public class Vehicle {
 
     }
 
-    private boolean isConflict(Turns t, Turns otherTurn) {
+    public boolean isConflict(Turns t, Turns otherTurn) {
+
         switch (t){
             case FROM_NORTH_STRAIGHT -> {
                 return (otherTurn == Turns.FROM_SOUTH_LEFT ||

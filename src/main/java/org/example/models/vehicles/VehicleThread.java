@@ -31,10 +31,12 @@ public class VehicleThread extends Thread {
             }
             try {
                 // Sleep for the vehicle's speed in seconds (speed is in tiles per second)
-                Thread.sleep(vehicle.getSpeed() * 1000);
+                Thread.sleep(250);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
+        //destroy the thread
+        Thread.currentThread().interrupt();
     }
 }

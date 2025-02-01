@@ -32,10 +32,15 @@ public class SimulationController {
         map.setIntersections(numIntersections);
         map.setLanesDirection();
         vehicles = new ArrayList<>();
-        generateNVehicles(numVehicles, map);
+        generateNVehicles(numVehicles);
         map.setVehicles(vehicles);
 
         // Start the vehicle threads (un thread pour chaque véhicule).
+
+    }
+
+
+    public void startSimulation() {
         for (Vehicle vehicle : vehicles) {
             VehicleThread vehicleThread = new VehicleThread(vehicle, map);
             vehicleThread.start();
@@ -43,7 +48,12 @@ public class SimulationController {
     }
 
     public void addVehicles(int numVehicles){
-        generateNVehicles(numVehicles, map);
+        for(int i = 0; i < numVehicles; i++){
+            Vehicle vehicle = createVehicule();
+            vehicles.add(vehicle);
+            VehicleThread vehicleThread = new VehicleThread(vehicle, map);
+            vehicleThread.start();
+        }
         map.setVehicles(vehicles);
     }
 
@@ -65,44 +75,46 @@ public class SimulationController {
         return vehicles;
     }
 
+
+
+    public Vehicle createVehicule(){
+        Random rand = new Random();
+        Point starting;
+        Point destination;
+
+        // Find a valid starting point
+        do {
+            starting = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
+        } while (!isValidStartingPoint(starting, map));
+
+        // Find a valid destination point
+        do {
+            destination = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
+        } while (!isValidDestinationPoint(destination, map) || isStartCloseToDestination(starting, destination));
+
+        Vehicle vehicle;
+        int vehicleType = rand.nextInt(2) + 1;
+
+
+        vehicle = switch (rand.nextInt(3)) {
+            case 0 -> new Car(destination, starting, 1, vehicleType);
+            case 1 -> new Truck(destination, starting, 1, vehicleType);
+            default -> new Bus(destination, starting, 1, vehicleType);
+        };
+        vehicle.calculatePath(map);
+        vehicle.setSimulationController(this);
+        return vehicle;
+    }
+
     /**
      * Génère n véhicules sur la carte.
      *
      * @param n   le nombre de véhicules à générer
-     * @param map la carte sur laquelle générer les véhicules
+
      */
-    private void generateNVehicles(int n, Map map) {
-        Random rand = new Random();
+    private void generateNVehicles(int n) {
         for (int i = 0; i < n; i++) {
-            Point starting;
-            Point destination;
-
-            // Find a valid starting point
-            do {
-                starting = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
-            } while (!isValidStartingPoint(starting, map));
-
-            // Find a valid destination point
-            do {
-                destination = map.roads_at_edge.get(rand.nextInt(map.roads_at_edge.size()));
-            } while (!isValidDestinationPoint(destination, map) || isStartCloseToDestination(starting, destination));
-
-            Vehicle vehicle;
-
-            switch (rand.nextInt(3)) {
-                case 0:
-                    vehicle = new Car(destination, starting, 1);
-                    break;
-                case 1:
-                    vehicle = new Truck(destination, starting, 1);
-                    break;
-                case 2:
-                default:
-                    vehicle = new Bus(destination, starting, 1);
-                    break;
-            }
-            vehicle.calculatePath(map);
-            vehicle.setSimulationController(this);
+            Vehicle vehicle = createVehicule();
             vehicles.add(vehicle);
         }
     }
