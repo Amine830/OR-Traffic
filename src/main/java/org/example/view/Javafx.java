@@ -65,7 +65,7 @@ public class Javafx extends Application {
 
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(20,20 ,2,20 );
+        simulationController.initializeSimulation(70,40 ,5,100 );
         peakVehicles = 50;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
@@ -97,7 +97,7 @@ public class Javafx extends Application {
      * managing vehicles count
      */
     private void manageVehicleCount() {
-        count = (int) (Math.random() * 10) ;
+        count = 10;
         if (addingVehicles) {
             if (vehicles.size() < peakVehicles) {
                 simulationController.addVehicles(1+ count);
@@ -171,6 +171,7 @@ public class Javafx extends Application {
                 if (vehicle.isArrived()) {
                     iterator.remove();
                     TotalWaitingTime += vehicle.TimeWating;
+                    vehicle.setPosition(new Point(1, 1));
                 }
             }
         });
@@ -181,13 +182,13 @@ public class Javafx extends Application {
         Point next = vehicle.getPath().isEmpty() ? current : vehicle.getPath().get(0);
 
         if (next.x < current.x) {
-            return new Image("file:src/main/resources/N1.jpg");
+            return new Image("file:src/main/resources/N"+vehicle.getVehiculeTexture()+".jpg");
         } else if (next.x > current.x) {
-            return new Image("file:src/main/resources/S1.jpg");
+            return new Image("file:src/main/resources/S"+vehicle.getVehiculeTexture()+".jpg");
         } else if (next.y > current.y) {
-            return new Image("file:src/main/resources/E1.jpg");
+            return new Image("file:src/main/resources/E"+vehicle.getVehiculeTexture()+".jpg");
         } else {
-            return new Image("file:src/main/resources/W1.jpg");
+            return new Image("file:src/main/resources/W"+vehicle.getVehiculeTexture()+".jpg");
         }
     }
 

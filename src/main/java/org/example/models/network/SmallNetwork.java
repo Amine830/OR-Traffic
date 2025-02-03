@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SmallNetwork  {
 
 
-    List<Vehicle> vehicles = Collections.synchronizedList(new ArrayList<>());
+    final List<Vehicle> vehicles = Collections.synchronizedList(new ArrayList<>());
     Intersection networkIntersection;
     ConcurrentHashMap<Vehicle, Integer> Traffic = new ConcurrentHashMap<>();
 
@@ -28,60 +28,44 @@ public class SmallNetwork  {
     public void calculatePreority() {
 
 
-        // Calculate scores for each vehicle
+        //Sort the trafic in the trafic based where the bigger value is the first
+        Traffic = Traffic.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(ConcurrentHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
+
+        Vehicle firstVehicle ;
+        if (!Traffic.isEmpty()) {
+            firstVehicle = Traffic.entrySet().iterator().next().getKey();
+            Traffic.put(firstVehicle, 1);
+        }else{
+            return;
+        }
+
+        //for the rest if the value isnt 0 make it 1
         for (Map.Entry<Vehicle, Integer> entry : Traffic.entrySet()) {
-
-            int score = entry.getKey().vehiclesBehind*10 + entry.getKey().TimeWating*2 + entry.getKey().getPath().size();
-            if (entry.getKey().is_someone_infront()) {
-                score = 0;
-            }
-
-            Traffic.put(entry.getKey(), score);
-
-        }
-
-        // Sort the vehicles based on their scores
-
-        synchronized (vehicles) {
-            for (int i = 0; i < vehicles.size(); i++) {
-                for (int j = i + 1; j < vehicles.size(); j++) {
-                    Integer scoreI = Traffic.get(vehicles.get(i));
-                    Integer scoreJ = Traffic.get(vehicles.get(j));
-                    if (scoreI != null && scoreJ != null && scoreI < scoreJ) {
-                        Vehicle temp = vehicles.get(i);
-                        vehicles.set(i, vehicles.get(j));
-                        vehicles.set(j, temp);
-
-                    }
-                }
-            }
-
-            // Set priority for the first vehicle
-            if (!vehicles.isEmpty()) {
-
-                Traffic.put(vehicles.get(0), 1);
-                Vehicle first = vehicles.get(0);
-
-                // Set priority for the remaining vehicles
-                for (int i = 1; i < vehicles.size(); i++) {
-                    if (first.nextTurn != null && !vehicles.get(i).is_someone_infront() &&
-                            first.isConflict(first.nextTurn, vehicles.get(i).nextTurn)) {
-                        Traffic.put(vehicles.get(i), 1);
-
-                    } else {
-                        Traffic.put(vehicles.get(i), 2);
-
-                    }
+            if (entry.getValue() != 0) {
+                if(firstVehicle.nextTurn!=null&& entry.getKey().nextTurn!=null
+                &&firstVehicle.isConflict(entry.getKey().nextTurn, firstVehicle.nextTurn)) {
+                    Traffic.put(entry.getKey(), 0);
+                } else {
+                    Traffic.put(entry.getKey(), 1);
                 }
             }
         }
+
 
     }
 
+
+
     public void addVehicleToQueue(Vehicle vehicle) {
-        if (!Traffic.containsKey(vehicle)) {
-            Traffic.put(vehicle, 1000);
+
+        int score = vehicle.vehiclesBehind * 3 + vehicle.TimeWating;
+        if (vehicle.is_someone_infront()) {
+            score = 0;
         }
+        Traffic.put(vehicle, score);
+
 
         calculatePreority();
     }
@@ -101,6 +85,16 @@ public class SmallNetwork  {
 
     public List<Vehicle> getVehicles() {
         return vehicles;
+    }
+
+    public List<Vehicle> getVehiclesInQueue() {
+        List<Vehicle> vehiclesInQueue = new ArrayList<>();
+        for (Map.Entry<Vehicle, Integer> entry : Traffic.entrySet()) {
+            if (entry.getValue() == 1) {
+                vehiclesInQueue.add(entry.getKey());
+            }
+        }
+        return vehiclesInQueue;
     }
 
     public void addVehicle(Vehicle vehicle) {

@@ -9,13 +9,14 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * La classe simulationController permet de gérer la simulation de la circulation des véhicules.
  */
 public class SimulationController {
     private Map map;
-    private List<Vehicle> vehicles;
+    private List<Vehicle> vehicles = new CopyOnWriteArrayList<>();
 
     /**
      * Initialise la simulation avec les paramètres donnés.
@@ -127,13 +128,15 @@ public class SimulationController {
      * retourner une list des position de tous les vehicules
      */
 
-    public List <Point> getVehiclesPositions(){
-        List <Point> positions = new ArrayList<>();
-        for (Vehicle vehicle : vehicles){
+public List<Point> getVehiclesPositions() {
+    List<Point> positions = new ArrayList<>();
+    synchronized (vehicles) {
+        for (Vehicle vehicle : vehicles) {
             positions.add(vehicle.getPosition());
         }
-        return positions;
     }
+    return positions;
+}
 
     /**
      * Vérifie si le point donné est un point de départ valide.

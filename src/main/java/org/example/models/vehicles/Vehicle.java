@@ -9,6 +9,7 @@ import org.example.models.network.SmallNetwork;
 
 import java.awt.Point;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Class representing a vehicle.
@@ -26,7 +27,7 @@ public class Vehicle {
     public boolean turning = false;
     public int TimeWating = 0;
     public int vehiclesBehind = 0;
-    public int distance = 0;
+
 
     public Turns nextTurn = null;
 
@@ -89,22 +90,22 @@ public class Vehicle {
 
 
 
-    private synchronized SmallNetwork get_local_network(){
-        if(intersectionsToPass.isEmpty()){
-            return null;
-        }
-        List<Vehicle> vehicles = simulationController.getVehicles();
-        for(Vehicle vehicle : vehicles){
-            if(vehicle.localnetwork != null){
-                if(vehicle.localnetwork.getNetworkIntersection().equals(intersectionsToPass.getFirst())
-                        && vehicle!= this){
-                    vehicle.localnetwork.addVehicle(this);
-                    return vehicle.localnetwork;
-                }
+private synchronized SmallNetwork get_local_network(){
+    if(intersectionsToPass.isEmpty()){
+        return null;
+    }
+    List<Vehicle> vehicles = new CopyOnWriteArrayList<>(simulationController.getVehicles());
+    for(Vehicle vehicle : vehicles){
+        if(vehicle.localnetwork != null){
+            if(vehicle.localnetwork.getNetworkIntersection().equals(intersectionsToPass.getFirst())
+                    && vehicle != this){
+                vehicle.localnetwork.addVehicle(this);
+                return vehicle.localnetwork;
             }
         }
-        return new SmallNetwork(intersectionsToPass.getFirst(),this);
     }
+    return new SmallNetwork(intersectionsToPass.getFirst(), this);
+}
 
     /**
      * Se déplacer vers la destination.
@@ -116,16 +117,6 @@ public class Vehicle {
     public synchronized void moveToNextPoint(Map map) {
 
 
-        System.out.println(VehicleThread.currentThread().getName() + " is moving to next point");
-
-        //before moving checks if the vehicle is at the destination
-        // gets the localnetwork if it is null
-        // gets the next turn if it is null
-        // if the next point is an intersection, checks if the vehicle is the first in the queue
-        // the queue gets updated based on the vehicle distance to the intersection and wether it
-        //can turn
-        // if the vehicle can't turn it waits
-
         if (position.equals(destination)) {
             arrived = true;
             return;
@@ -134,101 +125,81 @@ public class Vehicle {
         if (path.isEmpty() || path.getFirst() == null) {
             return;
         }
+
         Point nextPoint = path.getFirst();
 
-
-
-        if(nextTurn == null){
-            nextTurn = getTurn(position, path, map);
-        }
-
-        if(!intersectionsToPass.isEmpty()){
+        if (!intersectionsToPass.isEmpty()) {
             Intersection nextIntersection = intersectionsToPass.getFirst();
-            distance = distance(position, nextIntersection.getPos());
-        if(localnetwork == null) {
-            localnetwork = get_local_network();
-        }
-        if(distance<4){
-            localnetwork.addVehicleToQueue(this);
-        }else{
-            localnetwork.removeVehicle(this);
-        }
+            int distance = distance(position, nextIntersection.getPos());
+            if (localnetwork == null) {
+                localnetwork = get_local_network();
+            }
+            if (distance < 4 && localnetwork != null ) {
+                getVehiclesBehind();
+                localnetwork.addVehicleToQueue(this);
+                if(nextTurn == null){
+                    nextTurn = getTurn(position, path, map);
+                }
+            }
 
         }
-
-
-
 
 
         if(!turning) {
-
-             getVehiclesBehind();
-
-
-
-
-
-
-            //avoids collision in the intersection
-
             if (map.isIntersection(nextPoint)) {
-                //if the vehicle is the first in the queue
-                //checks your order in the queue
-
                 if(!localnetwork.is_first(this)){
+                    TimeWating++;
                     return;
                 }
-
-                for (Vehicle v : localnetwork.getVehicles()) {
-                    if (v.equals(this)) {
-                        continue;
-                    }
-
-                    if (v.turning) {
-                        if (isConflict(nextTurn, v.nextTurn)) {
-                            TimeWating++;
-                            return;
+                synchronized (localnetwork) {
+                    for (Vehicle v : localnetwork.getVehiclesInQueue()) {
+                        if (v.turning) {
+                            if (isConflict(nextTurn, v.nextTurn)) {
+                                TimeWating++;
+                                return;
+                            }
                         }
                     }
 
-
-                }
-                intersectionsToPass.removeFirst();
-                localnetwork.removeVehicle(this);
-                turning = true;
-
-            }
-
-        }
-
-        if(turning){
-            if(map.isIntersection(position)){
-
-                if(map.isRoad(nextPoint)){
-                    localnetwork.getVehicles().remove(this);
-                    if(localnetwork.getVehicles().isEmpty()){
-                        localnetwork = null;
-                    }else{
-                        localnetwork = get_local_network();
+                    if (!is_next_move_colision(nextPoint)) {
+                        this.position = nextPoint;
+                        this.path.removeFirst();
+                        turning = true;
+                        intersectionsToPass.removeFirst();
+                    } else {
+                        TimeWating++;
                     }
+                }
+                return;
+            }
 
-
-
-                    turning = false;
-                    nextTurn = null;
+        } else {
+            if(map.isIntersection(position)){
+                if(map.isRoad(nextPoint)){
+                    if (!is_next_move_colision(nextPoint)) {
+                        this.position = nextPoint;
+                        this.path.removeFirst();
+                        localnetwork.removeVehicle(this);
+                        localnetwork.getVehicles().remove(this);
+                        turning = false;
+                        nextTurn = null;
+                        get_local_network();
+                    }else{
+                        TimeWating++;
+                    }
+                    return;
                 }
             }
+
         }
-        //----------------
 
         if (!is_next_move_colision(nextPoint)) {
-
             this.position = nextPoint;
-
             this.path.removeFirst();
         }else{
             TimeWating++;
         }
+
 
     }
 
@@ -333,11 +304,16 @@ public class Vehicle {
 
     public synchronized boolean is_next_move_colision(Point next_move){
         //System.out.println(Thread.currentThread().getName() + ": BLOCKING HERE");
-        List<Point> vehicles_positions = simulationController.getVehiclesPositions();
-        for (Point vehicle_position : vehicles_positions){
+        List<Vehicle> vehicles_positions = simulationController.getVehicles();
+        for (Vehicle vehicle_position : vehicles_positions){
 
-            if (vehicle_position.equals(next_move)){
-                //System.out.println(Thread.currentThread().getName() + ": TRUE HERE");
+            if (vehicle_position.position.equals(next_move)){
+                if(turning && vehicle_position.turning){
+                    System.out.println("################################################################");
+                    System.out.println("Vehicle " + vehicleId + " is stuck " +nextTurn + " at "+ position );
+                    System.out.println("OtherVehicle " + vehicle_position.vehicleId + " is stuck " +vehicle_position.nextTurn + " at "+ vehicle_position.position );
+                    System.out.println("################################################################");
+                }
                 return true;
             }
         }
@@ -373,7 +349,7 @@ public class Vehicle {
             }
         }
 
-
+        assert endDirection != null;
 
         switch (startDirection) {
             case NORTH:
@@ -419,13 +395,13 @@ public class Vehicle {
 
     }
 
-    public boolean isConflict(Turns t, Turns otherTurn) {
+    public synchronized boolean isConflict(Turns t, Turns otherTurn) {
 
         switch (t){
             case FROM_NORTH_STRAIGHT -> {
                 return (otherTurn == Turns.FROM_SOUTH_LEFT ||
                         otherTurn == Turns.FROM_EAST_STRAIGHT ||
-                        otherTurn == Turns.FROM_EAST_RIGHT ||
+                        otherTurn == Turns.FROM_EAST_LEFT ||
                         otherTurn == Turns.FROM_WEST_STRAIGHT ||
                         otherTurn == Turns.FROM_WEST_RIGHT ||
                         otherTurn == Turns.FROM_WEST_LEFT);
@@ -551,7 +527,7 @@ public class Vehicle {
         vehiclesBehind = 0;
         String commingFrom = this.nextTurn.toString().split("_")[1];
         Intersection intersection = this.intersectionsToPass.getFirst();
-        for (Vehicle vehicle : simulationController.getVehicles()) {
+        for (Vehicle vehicle : localnetwork.getVehicles()) {
             if(vehicle.equals(this) || vehicle.intersectionsToPass.isEmpty() || vehicle.nextTurn == null){
                 continue;
             }
