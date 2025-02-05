@@ -65,8 +65,8 @@ public class Javafx extends Application {
 
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(70,45 ,4,100 );
-        peakVehicles = 150;
+        simulationController.initializeSimulation(70,40 ,5,100 );
+        peakVehicles = 50;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
 

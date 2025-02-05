@@ -1,6 +1,7 @@
 package org.example.models.network;
 
 import org.example.models.map.Intersection;
+import org.example.models.map.Turns;
 import org.example.models.vehicles.Vehicle;
 
 import java.util.*;
@@ -98,9 +99,6 @@ public class SmallNetwork  {
 
     public void addVehicle(Vehicle vehicle) {
         synchronized (vehicles) {
-            if(vehicles.contains(vehicle)){
-                return;
-            }
             vehicles.add(vehicle);
         }
     }

@@ -90,22 +90,21 @@ public class Vehicle {
 
 
 
-private synchronized void get_local_network(){
+private synchronized SmallNetwork get_local_network(){
     if(intersectionsToPass.isEmpty()){
-        return;
+        return null;
     }
     List<Vehicle> vehicles = new CopyOnWriteArrayList<>(simulationController.getVehicles());
     for(Vehicle vehicle : vehicles){
-        if(vehicle.localnetwork != null && !vehicle.intersectionsToPass.isEmpty()){
-            if(vehicle.intersectionsToPass.getFirst().equals(intersectionsToPass.getFirst())
+        if(vehicle.localnetwork != null){
+            if(vehicle.localnetwork.getNetworkIntersection().equals(intersectionsToPass.getFirst())
                     && vehicle != this){
-                localnetwork = vehicle.localnetwork;
-                localnetwork.addVehicle(this);
-                return;
+                vehicle.localnetwork.addVehicle(this);
+                return vehicle.localnetwork;
             }
         }
     }
-    localnetwork = new SmallNetwork(intersectionsToPass.getFirst(), this);
+    return new SmallNetwork(intersectionsToPass.getFirst(), this);
 }
 
     /**
@@ -129,10 +128,12 @@ private synchronized void get_local_network(){
 
         Point nextPoint = path.getFirst();
 
-        if (!intersectionsToPass.isEmpty() ) {
+        if (!intersectionsToPass.isEmpty()) {
             Intersection nextIntersection = intersectionsToPass.getFirst();
             int distance = distance(position, nextIntersection.getPos());
-            get_local_network();
+            if (localnetwork == null) {
+                localnetwork = get_local_network();
+            }
             if (distance < 4 && localnetwork != null ) {
                 getVehiclesBehind();
                 localnetwork.addVehicleToQueue(this);
@@ -151,7 +152,7 @@ private synchronized void get_local_network(){
                     return;
                 }
                 synchronized (localnetwork) {
-                    for (Vehicle v : localnetwork.getVehicles()) {
+                    for (Vehicle v : localnetwork.getVehiclesInQueue()) {
                         if (v.turning) {
                             if (isConflict(nextTurn, v.nextTurn)) {
                                 TimeWating++;
@@ -160,21 +161,11 @@ private synchronized void get_local_network(){
                         }
                     }
 
-                    if (!is_next_move_colision(nextPoint) ) {
+                    if (!is_next_move_colision(nextPoint)) {
                         this.position = nextPoint;
                         this.path.removeFirst();
-                        //############
-                        System.out.println("MAIN Vehicle " + vehicleId + " is turning " + nextTurn + " at " + position);
-
-                        for (Vehicle v : localnetwork.getVehicles()) {
-                            if (v.turning) {
-                                System.out.println("Vehicle " + v.vehicleId + " is turning " + v.nextTurn + " at " + v.position);
-                            }
-                        }
-                        //############
-
                         turning = true;
-
+                        intersectionsToPass.removeFirst();
                     } else {
                         TimeWating++;
                     }
@@ -192,7 +183,6 @@ private synchronized void get_local_network(){
                         localnetwork.getVehicles().remove(this);
                         turning = false;
                         nextTurn = null;
-                        intersectionsToPass.removeFirst();
                         get_local_network();
                     }else{
                         TimeWating++;
@@ -211,12 +201,6 @@ private synchronized void get_local_network(){
         }
 
 
-    }
-
-
-    public boolean is_next_afterI_free(List<Point> path, Map map){
-        Point Current = path.get(2);
-        return !is_next_move_colision(Current);
     }
 
 
@@ -328,7 +312,6 @@ private synchronized void get_local_network(){
                     System.out.println("################################################################");
                     System.out.println("Vehicle " + vehicleId + " is stuck " +nextTurn + " at "+ position );
                     System.out.println("OtherVehicle " + vehicle_position.vehicleId + " is stuck " +vehicle_position.nextTurn + " at "+ vehicle_position.position );
-                    System.out.println(localnetwork.equals(vehicle_position.localnetwork));
                     System.out.println("################################################################");
                 }
                 return true;
