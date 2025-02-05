@@ -26,7 +26,7 @@ public class SmallNetwork {
 
     public void calculatePreority() {
         for(Vehicle vehicle : Traffic.keySet()) {
-            int score = vehicle.vehiclesBehind * 10 + vehicle.TimeWating;
+            int score = vehicle.vehiclesBehind*10+1;
             if(vehicle.is_someone_infront()) {
                 score = 0;
             }
@@ -50,7 +50,12 @@ public class SmallNetwork {
                 }
             }
         }
-        Vehicle first = sortedMap.entrySet().iterator().next().getKey();
+        Vehicle first = null;
+        for(Map.Entry<Vehicle, Integer> entry : sortedMap.entrySet()) {
+            first = entry.getKey();
+            break;
+        }
+
         for(Vehicle vehicle : Traffic.keySet()) {
             if(vehicle.nextTurn!=null &&
                     first.nextTurn!=null
@@ -60,6 +65,8 @@ public class SmallNetwork {
                 int value = sortedMap.get(vehicle);
                 if(value!=0){
                     Traffic.put(vehicle, 1);
+                }else{
+                    Traffic.put(vehicle, 0);
                 }
             } else {
                 Traffic.put(vehicle, 0);
@@ -71,13 +78,13 @@ public class SmallNetwork {
 
 
     public void addVehicleToQueue(Vehicle vehicle) {
-        Traffic.put(vehicle, 0);
-        calculatePreority();
+        Traffic.put(vehicle, 1);
+        //calculatePreority();
     }
 
     public void removeVehicle(Vehicle vehicle) {
         Traffic.remove(vehicle);
-        calculatePreority();
+        //calculatePreority();
     }
 
     public Intersection getNetworkIntersection() {

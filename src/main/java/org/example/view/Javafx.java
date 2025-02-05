@@ -47,7 +47,7 @@ public class Javafx extends Application {
     private Image Eroad;
     private Image Wroad;
     private Image Inter;
-    private int nV = 25;
+    private int nV = 50;
 
 
     /**
@@ -66,7 +66,7 @@ public class Javafx extends Application {
 
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(40,30 ,4,nV );
+        simulationController.initializeSimulation(25,25 ,2,nV );
         peakVehicles = 75;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();

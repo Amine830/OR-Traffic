@@ -147,7 +147,6 @@ private synchronized void get_local_network(){
         if(!turning) {
 
             if (map.isIntersection(nextPoint)) {
-                localnetwork.calculatePreority();
                 if(!localnetwork.is_first(this)){
                     TimeWating++;
                     return;
