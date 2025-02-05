@@ -27,6 +27,7 @@ public class Vehicle {
     public boolean turning = false;
     public int TimeWating = 0;
     public int vehiclesBehind = 0;
+    private Map map;
 
 
     public Turns nextTurn = null;
@@ -36,13 +37,14 @@ public class Vehicle {
 
     private SimulationController simulationController;
 
-    public Vehicle(Point destination, Point position, int speed , int vehiculeTexture) {
+    public Vehicle(Point destination, Point position, int speed , int vehiculeTexture ,Map map) {
         this.destination = destination;
         this.position = position;
         this.speed = speed;
         this.vehicleId = ++id;
         this.vehiculeTexture = vehiculeTexture;
         this.path.add(position);
+        this.map = map;
     }
 
     public int getVehiculeTexture() {
@@ -90,27 +92,26 @@ public class Vehicle {
 
 
 
-private synchronized SmallNetwork get_local_network(){
+private synchronized void get_local_network(){
     if(intersectionsToPass.isEmpty()){
-        return null;
+        return;
     }
     List<Vehicle> vehicles = new CopyOnWriteArrayList<>(simulationController.getVehicles());
     for(Vehicle vehicle : vehicles){
-        if(vehicle.localnetwork != null){
-            if(vehicle.localnetwork.getNetworkIntersection().equals(intersectionsToPass.getFirst())
+        if(vehicle.localnetwork != null && !vehicle.intersectionsToPass.isEmpty()){
+            if(vehicle.intersectionsToPass.getFirst().equals(intersectionsToPass.getFirst())
                     && vehicle != this){
-                vehicle.localnetwork.addVehicle(this);
-                return vehicle.localnetwork;
+                localnetwork = vehicle.localnetwork;
+                localnetwork.addVehicle(this);
+                return;
             }
         }
     }
-    return new SmallNetwork(intersectionsToPass.getFirst(), this);
+    localnetwork = new SmallNetwork(intersectionsToPass.getFirst(), this);
 }
 
     /**
      * Se déplacer vers la destination.
-     *
-     *
      */
 
 
@@ -128,12 +129,10 @@ private synchronized SmallNetwork get_local_network(){
 
         Point nextPoint = path.getFirst();
 
-        if (!intersectionsToPass.isEmpty()) {
+        if (!intersectionsToPass.isEmpty() ) {
             Intersection nextIntersection = intersectionsToPass.getFirst();
             int distance = distance(position, nextIntersection.getPos());
-            if (localnetwork == null) {
-                localnetwork = get_local_network();
-            }
+            get_local_network();
             if (distance < 4 && localnetwork != null ) {
                 getVehiclesBehind();
                 localnetwork.addVehicleToQueue(this);
@@ -146,13 +145,15 @@ private synchronized SmallNetwork get_local_network(){
 
 
         if(!turning) {
+
             if (map.isIntersection(nextPoint)) {
+                localnetwork.calculatePreority();
                 if(!localnetwork.is_first(this)){
                     TimeWating++;
                     return;
                 }
                 synchronized (localnetwork) {
-                    for (Vehicle v : localnetwork.getVehiclesInQueue()) {
+                    for (Vehicle v : localnetwork.getVehicles()) {
                         if (v.turning) {
                             if (isConflict(nextTurn, v.nextTurn)) {
                                 TimeWating++;
@@ -161,14 +162,22 @@ private synchronized SmallNetwork get_local_network(){
                         }
                     }
 
-                    if (!is_next_move_colision(nextPoint)) {
+                    if (!is_next_move_colision(nextPoint) && is_next_afterI_free(nextPoint)) {
                         this.position = nextPoint;
                         this.path.removeFirst();
                         turning = true;
-                        intersectionsToPass.removeFirst();
+
                     } else {
                         TimeWating++;
                     }
+                }
+                return;
+            }else{
+                if (!is_next_collision_localnetwork(nextPoint)) {
+                    this.position = nextPoint;
+                    this.path.removeFirst();
+                }else{
+                    TimeWating++;
                 }
                 return;
             }
@@ -183,6 +192,7 @@ private synchronized SmallNetwork get_local_network(){
                         localnetwork.getVehicles().remove(this);
                         turning = false;
                         nextTurn = null;
+                        intersectionsToPass.removeFirst();
                         get_local_network();
                     }else{
                         TimeWating++;
@@ -201,6 +211,42 @@ private synchronized SmallNetwork get_local_network(){
         }
 
 
+    }
+
+    public boolean is_next_collision_localnetwork(Point nextPoint){
+        if(localnetwork == null){
+            return false;
+        }
+        LaneDirection direction = map.getlinedirection(position);
+        for(Vehicle vehicle : localnetwork.getVehicles()){
+            LaneDirection otherDirection = map.getlinedirection(vehicle.position);
+            if(direction == otherDirection && vehicle.position.equals(nextPoint)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public boolean is_next_afterI_free(Point nextPoint){
+        //get the index of the next point in the path
+        int index = path.indexOf(nextPoint);
+        if(index == -1){
+            return true;
+        }
+        Point Current = path.get(index);
+        while(map.isIntersection(Current)){
+            index++;
+            if(index == path.size()){
+                return true;
+            }
+            Current = path.get(index);
+        }
+        if(Current.equals(destination)){
+            return true;
+        }
+        index = path.indexOf(Current);
+        return !is_next_move_colision(path.get(index+1));
     }
 
 
@@ -303,22 +349,18 @@ private synchronized SmallNetwork get_local_network(){
 
 
     public synchronized boolean is_next_move_colision(Point next_move){
-        //System.out.println(Thread.currentThread().getName() + ": BLOCKING HERE");
-        List<Vehicle> vehicles_positions = simulationController.getVehicles();
-        for (Vehicle vehicle_position : vehicles_positions){
 
-            if (vehicle_position.position.equals(next_move)){
-                if(turning && vehicle_position.turning){
-                    System.out.println("################################################################");
-                    System.out.println("Vehicle " + vehicleId + " is stuck " +nextTurn + " at "+ position );
-                    System.out.println("OtherVehicle " + vehicle_position.vehicleId + " is stuck " +vehicle_position.nextTurn + " at "+ vehicle_position.position );
-                    System.out.println("################################################################");
-                }
+        List<Vehicle> Ve = simulationController.getVehicles();
+        for (Vehicle V : Ve){
+            if (V == null){
+                continue;
+            }
+            if (V.position.equals(next_move)){
                 return true;
             }
         }
 
-        //System.out.println(Thread.currentThread().getName() + ": FALSE HERE");
+
         return false;
     }
 
@@ -504,14 +546,11 @@ private synchronized SmallNetwork get_local_network(){
         if(intersectionsToPass.isEmpty()|| nextTurn == null){
             return false;
         }
-        String commingFrom = this.nextTurn.toString().split("_")[1];
+        LaneDirection direction = map.getlinedirection(position);
         Intersection intersection = this.intersectionsToPass.getFirst();
         for (Vehicle vehicle : localnetwork.getVehicles()) {
-            if(vehicle.equals(this) || vehicle.intersectionsToPass.isEmpty() || vehicle.nextTurn == null){
-                continue;
-            }
-            String otherCommingFrom = vehicle.nextTurn.toString().split("_")[1];
-            if (commingFrom.equals(otherCommingFrom) &&
+            LaneDirection otherDirection = map.getlinedirection(vehicle.position);
+            if ( direction == otherDirection &&
                     distance(vehicle.position, intersection.getPos()) <
                             distance(this.position, intersection.getPos())) {
                 return true;
@@ -525,14 +564,11 @@ private synchronized SmallNetwork get_local_network(){
             return;
         }
         vehiclesBehind = 0;
-        String commingFrom = this.nextTurn.toString().split("_")[1];
+        LaneDirection direction = map.getlinedirection(position);
         Intersection intersection = this.intersectionsToPass.getFirst();
         for (Vehicle vehicle : localnetwork.getVehicles()) {
-            if(vehicle.equals(this) || vehicle.intersectionsToPass.isEmpty() || vehicle.nextTurn == null){
-                continue;
-            }
-            String otherCommingFrom = vehicle.nextTurn.toString().split("_")[1];
-            if (commingFrom.equals(otherCommingFrom) &&
+            LaneDirection otherDirection = map.getlinedirection(vehicle.position);
+            if ( direction == otherDirection &&
                     distance(vehicle.position, intersection.getPos()) >
                             distance(this.position, intersection.getPos())) {
                 vehiclesBehind++;
@@ -553,5 +589,34 @@ private synchronized SmallNetwork get_local_network(){
             }
         }
         return traffic;
+    }
+
+    public boolean is_street_blocked()
+    {
+        Point CurrentPos = this.position;
+        LaneDirection direction = this.map.getlinedirection(CurrentPos);
+        while (!map.isIntersection(CurrentPos) || CurrentPos.x>1 || CurrentPos.y>1 || CurrentPos.x<map.height || CurrentPos.y<map.width) {
+            switch (direction) {
+                case NORTH:
+                    CurrentPos = new Point(CurrentPos.x + 1, CurrentPos.y);
+                    break;
+                case SOUTH:
+                    CurrentPos = new Point(CurrentPos.x - 1, CurrentPos.y);
+                    break;
+                case EAST:
+                    CurrentPos = new Point(CurrentPos.x, CurrentPos.y - 1);
+                    break;
+                case WEST:
+                    CurrentPos = new Point(CurrentPos.x, CurrentPos.y + 1);
+                    break;
+                default:
+                    return false;
+
+            }
+            if(!simulationController.isVehicleAt(CurrentPos)){
+                return false;
+            }
+        }
+        return true;
     }
 }

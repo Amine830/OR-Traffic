@@ -1,18 +1,17 @@
 package org.example.models.network;
 
 import org.example.models.map.Intersection;
-import org.example.models.map.Turns;
 import org.example.models.vehicles.Vehicle;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-public class SmallNetwork  {
-
+public class SmallNetwork {
 
     final List<Vehicle> vehicles = Collections.synchronizedList(new ArrayList<>());
     Intersection networkIntersection;
-    ConcurrentHashMap<Vehicle, Integer> Traffic = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<Vehicle, Integer> Traffic = new ConcurrentHashMap<>();
 
     public SmallNetwork(Intersection networkIntersection, Vehicle vehicle) {
         synchronized (vehicles) {
@@ -26,58 +25,60 @@ public class SmallNetwork  {
     }
 
     public void calculatePreority() {
-
-
-        //Sort the trafic in the trafic based where the bigger value is the first
-        Traffic = Traffic.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(ConcurrentHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
-
-        Vehicle firstVehicle ;
-        if (!Traffic.isEmpty()) {
-            firstVehicle = Traffic.entrySet().iterator().next().getKey();
-            Traffic.put(firstVehicle, 1);
-        }else{
-            return;
+        for(Vehicle vehicle : Traffic.keySet()) {
+            int score = vehicle.vehiclesBehind * 10 + vehicle.TimeWating;
+            if(vehicle.is_someone_infront()) {
+                score = 0;
+            }
+            Traffic.put(vehicle, score);
         }
 
-        //for the rest if the value isnt 0 make it 1
+
+        LinkedHashMap<Vehicle, Integer> sortedMap = new LinkedHashMap<>();
+        ArrayList<Integer> list = new ArrayList<>();
+
         for (Map.Entry<Vehicle, Integer> entry : Traffic.entrySet()) {
-            if (entry.getValue() != 0) {
-                if(firstVehicle.nextTurn!=null&& entry.getKey().nextTurn!=null
-                &&firstVehicle.isConflict(entry.getKey().nextTurn, firstVehicle.nextTurn)) {
-                    Traffic.put(entry.getKey(), 0);
-                } else {
-                    Traffic.put(entry.getKey(), 1);
+            list.add(entry.getValue());
+        }
+
+
+        Collections.sort(list, Collections.reverseOrder());
+        for (int num : list) {
+            for (Map.Entry<Vehicle, Integer> entry : Traffic.entrySet()) {
+                if (entry.getValue().equals(num)) {
+                    sortedMap.put(entry.getKey(), num);
                 }
             }
         }
+        Vehicle first = sortedMap.entrySet().iterator().next().getKey();
+        for(Vehicle vehicle : Traffic.keySet()) {
+            if(vehicle.nextTurn!=null &&
+                    first.nextTurn!=null
+                    &&!vehicle.isConflict(first.nextTurn,vehicle.nextTurn)) {
 
+                //get the value of the vehicle from the sorted map
+                int value = sortedMap.get(vehicle);
+                if(value!=0){
+                    Traffic.put(vehicle, 1);
+                }
+            } else {
+                Traffic.put(vehicle, 0);
+            }
+        }
 
     }
 
 
 
     public void addVehicleToQueue(Vehicle vehicle) {
-
-        int score = vehicle.vehiclesBehind * 3 + vehicle.TimeWating;
-        if (vehicle.is_someone_infront()) {
-            score = 0;
-        }
-        Traffic.put(vehicle, score);
-
-
+        Traffic.put(vehicle, 0);
         calculatePreority();
     }
-
 
     public void removeVehicle(Vehicle vehicle) {
         Traffic.remove(vehicle);
         calculatePreority();
     }
-
-
-
 
     public Intersection getNetworkIntersection() {
         return networkIntersection;
@@ -99,12 +100,10 @@ public class SmallNetwork  {
 
     public void addVehicle(Vehicle vehicle) {
         synchronized (vehicles) {
+            if (vehicles.contains(vehicle)) {
+                return;
+            }
             vehicles.add(vehicle);
         }
     }
-
-
-
-
-
 }

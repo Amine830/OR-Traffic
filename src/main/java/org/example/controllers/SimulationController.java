@@ -94,13 +94,13 @@ public class SimulationController {
         } while (!isValidDestinationPoint(destination, map) || isStartCloseToDestination(starting, destination));
 
         Vehicle vehicle;
-        int vehicleType = rand.nextInt(2) + 1;
+        int vehicleType = rand.nextInt(3) + 1;
 
 
         vehicle = switch (rand.nextInt(3)) {
-            case 0 -> new Car(destination, starting, 1, vehicleType);
-            case 1 -> new Truck(destination, starting, 1, vehicleType);
-            default -> new Bus(destination, starting, 1, vehicleType);
+            case 0 -> new Car(destination, starting, 1, vehicleType, map);
+            case 1 -> new Truck(destination, starting, 1, vehicleType, map);
+            default -> new Bus(destination, starting, 1, vehicleType, map);
         };
         vehicle.calculatePath(map);
         vehicle.setSimulationController(this);
@@ -136,6 +136,17 @@ public List<Point> getVehiclesPositions() {
         }
     }
     return positions;
+}
+
+public boolean isVehicleAt(Point point) {
+    synchronized (vehicles) {
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.getPosition().equals(point)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
     /**
