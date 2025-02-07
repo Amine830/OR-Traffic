@@ -82,6 +82,7 @@ public class SmallNetwork {
         //calculatePreority();
     }
 
+
     public void removeVehicle(Vehicle vehicle) {
         Traffic.remove(vehicle);
         //calculatePreority();

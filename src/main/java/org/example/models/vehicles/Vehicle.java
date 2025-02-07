@@ -28,6 +28,8 @@ public class Vehicle {
     public int TimeWating = 0;
     public int vehiclesBehind = 0;
     private Map map;
+    private List<List<Point>> paths = new ArrayList<>();
+    private int howManyDidChange = 0;
 
 
     public Turns nextTurn = null;
@@ -128,6 +130,17 @@ private synchronized void get_local_network(){
         }
 
         Point nextPoint = path.getFirst();
+        if(intersectionsToPass.size()>1 && traffic_in_area(intersectionsToPass.get(1)) >=1
+                && howManyDidChange < 1){
+            List<Point> otherChoix = getShortestPathWithout(intersectionsToPass.get(1),nextPoint);
+            if(otherChoix != null ){
+                System.out.println("Changing path for vehicle " + vehicleId);
+                this.path = otherChoix;
+                get_local_network();
+                updateIntersectionsToPass();
+                howManyDidChange++;
+            }
+        }
 
         if (!intersectionsToPass.isEmpty() ) {
             Intersection nextIntersection = intersectionsToPass.getFirst();
@@ -146,6 +159,7 @@ private synchronized void get_local_network(){
 
         if(!turning) {
 
+
             if (map.isIntersection(nextPoint)) {
                 if(!localnetwork.is_first(this)){
                     TimeWating++;
@@ -162,8 +176,7 @@ private synchronized void get_local_network(){
                     }
 
                     if (!is_next_move_colision(nextPoint) && is_next_afterI_free(nextPoint)) {
-                        this.position = nextPoint;
-                        this.path.removeFirst();
+                        move(nextPoint);
                         turning = true;
 
                     } else {
@@ -173,8 +186,7 @@ private synchronized void get_local_network(){
                 return;
             }else{
                 if (!is_next_collision_localnetwork(nextPoint)) {
-                    this.position = nextPoint;
-                    this.path.removeFirst();
+                    move(nextPoint);
                 }else{
                     TimeWating++;
                 }
@@ -185,8 +197,7 @@ private synchronized void get_local_network(){
             if(map.isIntersection(position)){
                 if(map.isRoad(nextPoint)){
                     if (!is_next_move_colision(nextPoint)) {
-                        this.position = nextPoint;
-                        this.path.removeFirst();
+                        move(nextPoint);
                         localnetwork.removeVehicle(this);
                         localnetwork.getVehicles().remove(this);
                         turning = false;
@@ -203,8 +214,7 @@ private synchronized void get_local_network(){
         }
 
         if (!is_next_move_colision(nextPoint)) {
-            this.position = nextPoint;
-            this.path.removeFirst();
+            move(nextPoint);
         }else{
             TimeWating++;
         }
@@ -225,6 +235,43 @@ private synchronized void get_local_network(){
         }
         return false;
     }
+
+    public List<Point> getShortestPathWithout(Intersection inter,Point Next) {
+        for(List<Point> p : paths){
+            if(p.getFirst().equals(Next) && !PathHasIntersection(p,inter)){
+                return p;
+            }
+        }
+        return null;
+    }
+
+    private boolean PathHasIntersection(List<Point> path,Intersection inter){
+        for(Point point : path){
+            if(map.isIntersection(point) && map.getIntersection(point).equals(inter)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void move(Point next) {
+        this.position = next;
+        Iterator<List<Point>> iterator = paths.iterator();
+        while (iterator.hasNext()) {
+            List<Point> p = iterator.next();
+            if(p.equals(this.path)){
+                continue;
+            }
+            if (p.getFirst().equals(next)) {
+                p.removeFirst();
+            } else {
+                iterator.remove();
+            }
+        }
+        this.path.removeFirst();
+    }
+
+
 
 
     public boolean is_next_afterI_free(Point nextPoint){
@@ -257,8 +304,6 @@ private synchronized void get_local_network(){
      */
 
     public void calculatePath(Map map) {
-
-        List<List<Point>> paths = new ArrayList<>();
         checkAllPaths(map, paths, position, destination);
 
         if(paths.isEmpty()) {
@@ -268,12 +313,18 @@ private synchronized void get_local_network(){
         //get the shortest path
         for(List<Point> p : paths){
             //condition here to add if there is a intersection to avoid
-
+            p.removeFirst();
             if(p.size() < this.path.size() || this.path.size()<2){
                 this.path = p;
             }
         }
 
+        updateIntersectionsToPass();
+
+    }
+
+    private void updateIntersectionsToPass() {
+        intersectionsToPass.clear();
         for(Point point : path){
             if(map.isIntersection(point)){
                 Intersection intersection = map.getIntersection(point);
@@ -282,9 +333,6 @@ private synchronized void get_local_network(){
                 }
             }
         }
-        path.removeFirst();
-
-
 
     }
 
@@ -310,7 +358,7 @@ private synchronized void get_local_network(){
             // If the current point is the destination, store the path
             if (currentPoint.equals(destination)) {
                 paths.add(new ArrayList<>(currentPath));
-                if(paths.size() > 0){
+                if(paths.size() > 20){
                     return;
                 }
                 continue; // Continue to explore other paths
@@ -332,6 +380,7 @@ private synchronized void get_local_network(){
 
             // Check if the current point is an intersection
             if (map.isIntersection(currentPoint)) {
+
                 List<Point> neighbors = map.ContinueInDirection(currentPoint);
 
                 for (Point neighbor : neighbors) {

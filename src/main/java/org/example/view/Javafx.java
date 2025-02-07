@@ -66,8 +66,8 @@ public class Javafx extends Application {
 
 
         simulationController = new SimulationController();
-        simulationController.initializeSimulation(25,25 ,2,nV );
-        peakVehicles = 75;
+        simulationController.initializeSimulation(50,40 ,4,20 );
+        peakVehicles = 70;
         map = simulationController.getMap();
         vehicles = simulationController.getVehicles();
 
@@ -98,7 +98,7 @@ public class Javafx extends Application {
      * managing vehicles count
      */
     private void manageVehicleCount() {
-        count = 20;
+        count = 10;
         nV = nV+ count;
         if (addingVehicles) {
             if (vehicles.size() < peakVehicles) {
