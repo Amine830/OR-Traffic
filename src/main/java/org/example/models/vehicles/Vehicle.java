@@ -134,11 +134,11 @@ private synchronized void get_local_network(){
                 && howManyDidChange < 1){
             List<Point> otherChoix = getShortestPathWithout(intersectionsToPass.get(1),nextPoint);
             if(otherChoix != null ){
-                System.out.println("Changing path for vehicle " + vehicleId);
+                System.out.println(" --> Changing path for vehicle " + vehicleId);
                 this.path = otherChoix;
                 get_local_network();
                 updateIntersectionsToPass();
-                howManyDidChange++;
+                this.howManyDidChange++;
             }
         }
 
@@ -666,5 +666,9 @@ private synchronized void get_local_network(){
             }
         }
         return true;
+    }
+
+    public int getHowManyDidChange() {
+        return howManyDidChange;
     }
 }

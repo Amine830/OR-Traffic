@@ -25,10 +25,12 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
                 <configuration>
                     <mainClass>org.example.view.Javafx</mainClass>
                     <arguments>
-                        <argument>-Xmx1024m</argument>
+                        <argument>--enable-preview</argument>
+                        <argument>-Xmx2048m</argument>
                     </arguments>
                 </configuration>
             </plugin>
@@ -42,17 +44,6 @@
                         <arg>--enable-preview</arg>
                     </compilerArgs>
                     <fork>true</fork>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <configuration>
-                    <mainClass>org.example.view.Javafx</mainClass>
-                    <arguments>
-                        <argument>--enable-preview</argument>
-                    </arguments>
                 </configuration>
             </plugin>
         </plugins>

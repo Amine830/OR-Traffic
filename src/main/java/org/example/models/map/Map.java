@@ -6,6 +6,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Map{
 
@@ -151,9 +152,8 @@ public class Map{
      * @param vehicles Liste de véhicules
      */
     public void setVehicles(List<Vehicle> vehicles) {
-        this.vehicles = vehicles;
+        this.vehicles = new CopyOnWriteArrayList<>(vehicles);
     }
-
     /**
      * Check if an intersection exists at the same horizontal or vertical position
      * @param x

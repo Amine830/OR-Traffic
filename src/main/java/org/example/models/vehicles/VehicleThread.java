@@ -1,42 +1,43 @@
+// src/main/java/org/example/models/vehicles/VehicleThread.java
 package org.example.models.vehicles;
 
 import org.example.models.map.Map;
 
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+
 /**
- * Class repressentant un thread de véhicule.
+ * This class is responsible for moving the vehicle on the map.
  */
-public class VehicleThread extends Thread {
+public class VehicleThread {
     private final Vehicle vehicle;
     private final Map map;
+    private final ScheduledExecutorService scheduler; // Pour les tâches périodiques (les threads des véhicules).
 
     /**
-     * Constructeur de la classe VehicleThread.
+     * Constructor
      *
-     * @param vehicle le véhicule
-     * @param map     la carte
+     * @param vehicle   the vehicle to move
+     * @param map       the map
+     * @param scheduler the scheduler
      */
-    public VehicleThread(Vehicle vehicle, Map map) {
+    public VehicleThread(Vehicle vehicle, Map map, ScheduledExecutorService scheduler) {
         this.vehicle = vehicle;
         this.map = map;
+        this.scheduler = scheduler;
     }
 
     /**
-     * Méthode run du thread.
+     * Start the thread.
      */
-    @Override
-    public void run() {
-        while (!vehicle.isArrived()) {
+    public void start() {
+        int updateRate = 250;
+        scheduler.scheduleAtFixedRate(() -> {
             synchronized (map) {
+                // On déplace le véhicule sur la carte chaque updateRate millisecondes.
                 vehicle.moveToNextPoint(map);
             }
-            try {
-                // Sleep for the vehicle's speed in seconds (speed is in tiles per second)
-                Thread.sleep(250);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        //destroy the thread
-        Thread.currentThread().interrupt();
+        }, 0, updateRate, TimeUnit.MILLISECONDS);
     }
 }
