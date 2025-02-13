@@ -110,6 +110,11 @@ public class SimulationController {
 
 
 
+    /**
+     * Crée un véhicule avec une destination et un point de départ aléatoires.
+     *
+     * @return le véhicule créé
+     */
     public Vehicle createVehicule(){
         Random rand = new Random();
         Point starting;
@@ -213,6 +218,11 @@ public class SimulationController {
         return false;
     }
 
+    /**
+     * Retourne le nombre total de changements de voie effectués par les véhicules.
+     *
+     * @return le nombre total de changements de voie effectués par les véhicules
+     */
     public int getTotalPathChanges() {
         return vehicles.stream().mapToInt(Vehicle::getHowManyDidChange).sum();
     }
