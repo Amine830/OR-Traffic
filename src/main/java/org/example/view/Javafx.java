@@ -36,6 +36,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
+import org.example.models.vehicles.VehicleThread;
 
 
 /**
@@ -134,11 +135,8 @@ public class Javafx extends Application {
         // Mettre à jour les statistiques.
         scheduler.scheduleAtFixedRate(this::updateStats, 0, 1000, TimeUnit.MILLISECONDS);
 
-        // PS : La ligne en bas doit normalement permettre de générer des véhicules périodiquement tous les 5 secondes
-        // Mais elle ne fonctionne pas correctement, elle ajoute bien des véhicules à la liste, mais ils ne sont pas affichés
-
         // Ajouter des véhicules périodiquement.
-        //scheduler.scheduleAtFixedRate(this::addVehiclesPeriodically, 0, 5000, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(this::addVehiclesPeriodically, 0, 5000, TimeUnit.MILLISECONDS);
 
         // Vérifier si la simulation est terminée.
         scheduler.scheduleAtFixedRate(this::checkSimulationEnd, 0, 1000, TimeUnit.MILLISECONDS);
@@ -201,11 +199,6 @@ public class Javafx extends Application {
             gridPane.getChildren().clear();
             drawMap();
 
-            if (vehicles.isEmpty() && totalVehicleCount >= TOTAL_VEHICLES_TO_GENERATE) {
-                System.out.println("Simulation complete.");
-                //System.exit(0);
-            }
-
             List<Vehicle> vehiclesToRemove = new ArrayList<>();
             for (Vehicle vehicle : vehicles) {
                 Image vehicleImage = getVehicleImage(vehicle);
@@ -249,13 +242,23 @@ public class Javafx extends Application {
         Platform.runLater(() -> {
             if (totalVehicleCount < TOTAL_VEHICLES_TO_GENERATE && activeVehicleCount < MAX_ACTIVE_VEHICLES) {
                 int vehiclesToAdd = Math.min(5, MAX_ACTIVE_VEHICLES - activeVehicleCount);
-                simulationController.addVehicles(vehiclesToAdd);
+                List<Vehicle> newVehicles = simulationController.addVehicles(vehiclesToAdd);
+                // Ajouter les nouveaux véhicules à la liste des véhicules.
+                this.vehicles.addAll(newVehicles);
                 totalVehicleCount += vehiclesToAdd;
                 activeVehicleCount += vehiclesToAdd;
-                System.out.println("Added " + vehiclesToAdd + " vehicles. Total vehicles: " + totalVehicleCount);
+                //System.out.println("Added " + vehiclesToAdd + " vehicles. Total vehicles: " + totalVehicleCount);
+
+                // Démarrer les threads des nouveaux véhicules.
+                for (Vehicle vehicle : newVehicles) {
+                    VehicleThread vehicleThread = new VehicleThread(vehicle, map, scheduler);
+                    vehicleThread.start();
+                    //System.out.println("Vehicle added: " + vehicle.getVehicleId() + " at " + vehicle.getPosition()+ " taille liste : "+vehicles.size());
+                }
+
 
             } else {
-                System.out.println("Maximum number of active vehicles reached.");
+                //System.out.println("Maximum number of active vehicles reached.");
             }
         });
     }
@@ -302,7 +305,7 @@ public class Javafx extends Application {
         statsBox.setPadding(new Insets(10));
         statsBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, CornerRadii.EMPTY, Insets.EMPTY)));
 
-        Label statsTitle = new Label(" ***** Statistics  ***** ");
+        Label statsTitle = new Label(" Statistiques : ");
         statsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         totalWaitingTimeLabel = new Label("Total Waiting Time: 0");

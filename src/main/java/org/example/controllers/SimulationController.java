@@ -47,7 +47,7 @@ public class SimulationController {
     public void startSimulation() {
         scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
         for (Vehicle vehicle : vehicles) {
-            VehicleThread vehicleThread = new VehicleThread(vehicle, map, scheduler);
+            VehicleThread vehicleThread = new VehicleThread(vehicle, map, this.scheduler);
             vehicleThread.start();
         }
     }
@@ -75,6 +75,7 @@ public class SimulationController {
         map.setVehicles(vehicles);
         return newVehicles;
     }
+
 
     /**
      * Génère n véhicules sur la carte.

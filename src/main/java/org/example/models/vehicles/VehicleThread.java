@@ -32,7 +32,7 @@ public class VehicleThread {
      * Start the thread.
      */
     public void start() {
-        int updateRate = 250;
+        int updateRate = 250; // Toutes les 250 ms, on met à jour la position du véhicule.
         scheduler.scheduleAtFixedRate(() -> {
             synchronized (map) {
                 // On déplace le véhicule sur la carte chaque updateRate millisecondes.
