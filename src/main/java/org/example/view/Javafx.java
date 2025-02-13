@@ -22,6 +22,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,7 +63,7 @@ public class Javafx extends Application {
     // Construction
     private static final int MAP_WIDTH = 50;
     private static final int MAP_HEIGHT = 35;
-    private static final int NUM_VEHICLES = 15;
+    private static final int NUM_VEHICLES = 25;
     private static final int NUM_INTERSECTIONS = 4;
 
     // ------------------------------------ Variables  ------------------------------------
@@ -72,7 +73,7 @@ public class Javafx extends Application {
     public static int TotalWaitingTime = 0;
     private int vehiclesReachedDestination = 0;
     private static final int UPDATE_INTERVAL = 200;
-    private static final int MAX_ACTIVE_VEHICLES = 30;
+    private static final int MAX_ACTIVE_VEHICLES = 100;
     private static final int TOTAL_VEHICLES_TO_GENERATE = 200;
     // ----------------------------------------------------------------------------------------
 
@@ -208,6 +209,8 @@ public class Javafx extends Application {
                 gridPane.add(imageView, vehicle.getPosition().y, vehicle.getPosition().x);
 
                 if (vehicle.isArrived()) {
+                    //this is the fix dont remove it
+                    vehicle.setPosition(new Point(1, 1));
                     vehiclesToRemove.add(vehicle);
                     vehiclesReachedDestination++;
                     activeVehicleCount--;
@@ -241,7 +244,8 @@ public class Javafx extends Application {
     private void addVehiclesPeriodically() {
         Platform.runLater(() -> {
             if (totalVehicleCount < TOTAL_VEHICLES_TO_GENERATE && activeVehicleCount < MAX_ACTIVE_VEHICLES) {
-                int vehiclesToAdd = Math.min(5, MAX_ACTIVE_VEHICLES - activeVehicleCount);
+                Random rand = new Random();
+                int vehiclesToAdd = rand.nextInt(20) + 1;
                 List<Vehicle> newVehicles = simulationController.addVehicles(vehiclesToAdd);
                 // Ajouter les nouveaux véhicules à la liste des véhicules.
                 this.vehicles.addAll(newVehicles);

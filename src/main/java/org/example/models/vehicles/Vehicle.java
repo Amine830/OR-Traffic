@@ -130,8 +130,8 @@ private synchronized void get_local_network(){
         }
 
         Point nextPoint = path.getFirst();
-        if(intersectionsToPass.size()>1 && traffic_in_area(intersectionsToPass.get(1)) >=1
-                && howManyDidChange < 1){
+        if(intersectionsToPass.size()>1 && traffic_in_area(intersectionsToPass.get(1)) >=20
+                && howManyDidChange < 2){
             List<Point> otherChoix = getShortestPathWithout(intersectionsToPass.get(1),nextPoint);
             if(otherChoix != null ){
                 System.out.println(" --> Changing path for vehicle " + vehicleId);
@@ -175,7 +175,7 @@ private synchronized void get_local_network(){
                         }
                     }
 
-                    if (!is_next_move_colision(nextPoint) && is_next_afterI_free(nextPoint)) {
+                    if (true) {
                         move(nextPoint);
                         turning = true;
 
