@@ -56,6 +56,14 @@ public class Vehicle {
         return destination;
     }
 
+    public int getScore(){
+        int score = TimeWating + vehiclesBehind*10 + howManyDidChange*20;
+        if(is_someone_infront()){
+            score = 0;
+        }
+        return score;
+    }
+
     public void setSimulationController(SimulationController simulationController) {
         this.simulationController = simulationController;
     }
