@@ -36,11 +36,6 @@ public class SmallNetwork {
             return Integer.compare(score2, score1); // Descending order
         });
 
-        // Optional: Print the sorted list for debugging purposes
-        System.out.println("Sorted Traffic List: ######################################################################");
-        Traffic.forEach(vehicle -> System.out.println("Vehicle ID: " + vehicle.getVehicleId() + ", Score: " + vehicle.getScore()));
-
-
     }
 
 

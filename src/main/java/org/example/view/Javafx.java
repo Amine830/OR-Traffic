@@ -61,10 +61,10 @@ public class Javafx extends Application {
     private Label vehiclesReachedDestinationLabel;
 
     // Construction
-    private static final int MAP_WIDTH = 50;
-    private static final int MAP_HEIGHT = 35;
+    private static final int MAP_WIDTH = 30;
+    private static final int MAP_HEIGHT = 30;
     private static final int NUM_VEHICLES = 25;
-    private static final int NUM_INTERSECTIONS = 4;
+    private static final int NUM_INTERSECTIONS = 3;
 
     // ------------------------------------ Variables  ------------------------------------
     private int initialVehicleCount;
@@ -73,7 +73,7 @@ public class Javafx extends Application {
     public static int TotalWaitingTime = 0;
     private int vehiclesReachedDestination = 0;
     private static final int UPDATE_INTERVAL = 200;
-    private static final int MAX_ACTIVE_VEHICLES = 100;
+    private static final int MAX_ACTIVE_VEHICLES = 75;
     private static final int TOTAL_VEHICLES_TO_GENERATE = 200;
     // ----------------------------------------------------------------------------------------
 
@@ -212,6 +212,7 @@ public class Javafx extends Application {
                     //this is the fix dont remove it
                     vehicle.setPosition(new Point(1, 1));
                     vehiclesToRemove.add(vehicle);
+                    TotalWaitingTime += vehicle.TimeWating;
                     vehiclesReachedDestination++;
                     activeVehicleCount--;
                 }
@@ -230,7 +231,7 @@ public class Javafx extends Application {
             vehicleCountLabel.setText("Véhicules Actifs: " + activeVehicleCount);
             totalVehicleCountLabel.setText("Total Véhicules: " + totalVehicleCount);
             totalWaitingTimeLabel.setText("Temps Attente: " + TotalWaitingTime);
-            int averageWaitingTime = totalVehicleCount > 0 ? TotalWaitingTime / totalVehicleCount : 0;
+            int averageWaitingTime = vehiclesReachedDestination > 0 ? TotalWaitingTime / vehiclesReachedDestination : 0;
             averageWaitingTimeLabel.setText("Attente Moyenne: " + averageWaitingTime);
             vehiclesReachedDestinationLabel.setText("Arrivés: " + vehiclesReachedDestination);
             pathChangeCountLabel.setText("Changements: " + simulationController.getTotalPathChanges());
@@ -245,7 +246,9 @@ public class Javafx extends Application {
         Platform.runLater(() -> {
             if (totalVehicleCount < TOTAL_VEHICLES_TO_GENERATE && activeVehicleCount < MAX_ACTIVE_VEHICLES) {
                 Random rand = new Random();
-                int vehiclesToAdd = rand.nextInt(20) + 1;
+                int vehiclesToAdd = rand.nextInt(totalVehicleCount/2) + 1;
+                if(vehiclesToAdd>20)
+                    vehiclesToAdd = 20;
                 List<Vehicle> newVehicles = simulationController.addVehicles(vehiclesToAdd);
                 // Ajouter les nouveaux véhicules à la liste des véhicules.
                 this.vehicles.addAll(newVehicles);
